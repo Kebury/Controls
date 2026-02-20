@@ -1,0 +1,963 @@
+﻿<UserControl x:Class="Controls.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1000"
+             Background="{DynamicResource SecondaryBackground}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="30">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" Margin="0,0,0,30">
+                <TextBlock Text="⚙️ Настройки приложения" 
+                           FontSize="28" 
+                           FontWeight="Bold"
+                           Foreground="{DynamicResource PrimaryText}"/>
+                <TextBlock Text="Управление параметрами и данными системы" 
+                           FontSize="14" 
+                           Foreground="{DynamicResource SecondaryText}"
+                           Margin="0,5,0,0"/>
+            </StackPanel>
+
+            <StackPanel Grid.Row="1">
+
+                <Border Background="{DynamicResource PrimaryBackground}"
+                        BorderBrush="{DynamicResource PrimaryBorder}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="20"
+                        Margin="0,0,0,20">
+                    <StackPanel>
+                        <TextBlock Text="🏢 Наименование организации" 
+                                   FontSize="18" 
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryText}"
+                                   Margin="0,0,0,15"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="250"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Название организации:"
+                                       FontSize="14"
+                                       Foreground="{DynamicResource SecondaryText}"
+                                       VerticalAlignment="Center"/>
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding OrganizationName, UpdateSourceTrigger=LostFocus}"
+                                     FontSize="14"
+                                     Padding="8,6"
+                                     Margin="10,0,0,0"
+                                     MaxLength="200"/>
+                        </Grid>
+                        <TextBlock Text="Наименование отображается в заголовке окна и боковой панели навигации"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource TertiaryText}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,15,0,0"/>
+                    </StackPanel>
+                </Border>
+                
+                <Border Background="{DynamicResource PrimaryBackground}"
+                        BorderBrush="{DynamicResource PrimaryBorder}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="20"
+                        Margin="0,0,0,20">
+                    <StackPanel>
+                        <TextBlock Text="🎨 Тема приложения" 
+                                   FontSize="18" 
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryText}"
+                                   Margin="0,0,0,15"/>
+                        
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                <TextBlock Text="Светлая" 
+                                           FontSize="14"
+                                           Foreground="{DynamicResource SecondaryText}"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,10,0"/>
+                                
+                                <CheckBox IsChecked="{Binding IsDarkTheme}"
+                                          VerticalAlignment="Center"
+                                          Margin="0,0,10,0">
+                                    <CheckBox.Style>
+                                        <Style TargetType="CheckBox">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="CheckBox">
+                                                        <Grid Width="50" Height="26" Cursor="Hand">
+                                                            <Border CornerRadius="13">
+                                                                <Border.Style>
+                                                                    <Style TargetType="Border">
+                                                                        <Setter Property="Background" Value="{DynamicResource ButtonSecondary}"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+                                                                                <Setter Property="Background" Value="{DynamicResource ButtonPrimary}"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Border.Style>
+                                                            </Border>
+                                                            <Ellipse Width="20" Height="20" Fill="White" 
+                                                                     HorizontalAlignment="Left" 
+                                                                     Margin="3,0,0,0"
+                                                                     x:Name="toggleThumb">
+                                                                <Ellipse.Style>
+                                                                    <Style TargetType="Ellipse">
+                                                                        <Setter Property="RenderTransform">
+                                                                            <Setter.Value>
+                                                                                <TranslateTransform X="0"/>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+                                                                                <Setter Property="RenderTransform">
+                                                                                    <Setter.Value>
+                                                                                        <TranslateTransform X="24"/>
+                                                                                    </Setter.Value>
+                                                                                </Setter>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Ellipse.Style>
+                                                            </Ellipse>
+                                                        </Grid>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </CheckBox.Style>
+                                </CheckBox>
+                                
+                                <TextBlock Text="Тёмная" 
+                                           FontSize="14"
+                                           Foreground="{DynamicResource SecondaryText}"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+                        
+                        <TextBlock Text="Выберите цветовую схему интерфейса" 
+                                   FontSize="13"
+                                   Foreground="{DynamicResource TertiaryText}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,15,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="{DynamicResource PrimaryBackground}"
+                        BorderBrush="{DynamicResource PrimaryBorder}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="20"
+                        Margin="0,0,0,20">
+                    <StackPanel>
+                        <TextBlock Text="🚀 Автозапуск" 
+                                   FontSize="18" 
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryText}"
+                                   Margin="0,0,0,15"/>
+                        
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                <TextBlock Text="Отключено" 
+                                           FontSize="14"
+                                           Foreground="{DynamicResource SecondaryText}"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,10,0"/>
+                                
+                                <CheckBox IsChecked="{Binding IsAutoStartEnabled}"
+                                          VerticalAlignment="Center"
+                                          Margin="0,0,10,0">
+                                    <CheckBox.Style>
+                                        <Style TargetType="CheckBox">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="CheckBox">
+                                                        <Grid Width="50" Height="26" Cursor="Hand">
+                                                            <Border CornerRadius="13">
+                                                                <Border.Style>
+                                                                    <Style TargetType="Border">
+                                                                        <Setter Property="Background" Value="{DynamicResource ButtonSecondary}"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+                                                                                <Setter Property="Background" Value="{DynamicResource ButtonSuccess}"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Border.Style>
+                                                            </Border>
+                                                            <Ellipse Width="20" Height="20" Fill="White" 
+                                                                     HorizontalAlignment="Left" 
+                                                                     Margin="3,0,0,0"
+                                                                     x:Name="toggleThumb">
+                                                                <Ellipse.Style>
+                                                                    <Style TargetType="Ellipse">
+                                                                        <Setter Property="RenderTransform">
+                                                                            <Setter.Value>
+                                                                                <TranslateTransform X="0"/>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+                                                                                <Setter Property="RenderTransform">
+                                                                                    <Setter.Value>
+                                                                                        <TranslateTransform X="24"/>
+                                                                                    </Setter.Value>
+                                                                                </Setter>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Ellipse.Style>
+                                                            </Ellipse>
+                                                        </Grid>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </CheckBox.Style>
+                                </CheckBox>
+                                
+                                <TextBlock Text="Включено" 
+                                           FontSize="14"
+                                           Foreground="{DynamicResource SecondaryText}"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+                        
+                        <TextBlock Text="Приложение будет автоматически запускаться при входе в систему" 
+                                   FontSize="13"
+                                   Foreground="{DynamicResource TertiaryText}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,15,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="{DynamicResource PrimaryBackground}"
+                        BorderBrush="{DynamicResource PrimaryBorder}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="20"
+                        Margin="0,0,0,20">
+                    <StackPanel>
+                        <TextBlock Text="🔔 Частота уведомлений" 
+                                   FontSize="18" 
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryText}"
+                                   Margin="0,0,0,15"/>
+
+                        <Grid Margin="0,0,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="250"/>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Text="Интервал проверки уведомлений:" 
+                                       FontSize="14"
+                                       Foreground="{DynamicResource SecondaryText}"
+                                       VerticalAlignment="Center"/>
+
+                            <ComboBox Grid.Column="1"
+                                      SelectedValue="{Binding CheckIntervalMinutes}"
+                                      SelectedValuePath="Content"
+                                      Margin="10,0,0,0">
+                                <ComboBoxItem Content="15"/>
+                                <ComboBoxItem Content="30"/>
+                                <ComboBoxItem Content="45"/>
+                                <ComboBoxItem Content="60"/>
+                            </ComboBox>
+
+                            <TextBlock Grid.Column="2" 
+                                       Text="минут" 
+                                       FontSize="14"
+                                       Foreground="{DynamicResource TertiaryText}"
+                                       VerticalAlignment="Center"
+                                       Margin="10,0,0,0"/>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="250"/>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Text="Срок исполнения завтра:" 
+                                       FontSize="14"
+                                       Foreground="{DynamicResource SecondaryText}"
+                                       VerticalAlignment="Center"/>
+
+                            <ComboBox Grid.Column="1"
+                                      SelectedValue="{Binding DueTomorrowIntervalMinutes}"
+                                      SelectedValuePath="Content"
+                                      Margin="10,0,0,0">
+                                <ComboBoxItem Content="60"/>
+                                <ComboBoxItem Content="120"/>
+                                <ComboBoxItem Content="180"/>
+                                <ComboBoxItem Content="360"/>
+                                <ComboBoxItem Content="720"/>
+                            </ComboBox>
+
+                            <TextBlock Grid.Column="2" 
+                                       FontSize="14"
+                                       Foreground="{DynamicResource TertiaryText}"
+                                       VerticalAlignment="Center"
+                                       Margin="10,0,0,0"
+                                       Text="минут"/>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="250"/>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Text="Срок исполнения сегодня:" 
+                                       FontSize="14"
+                                       Foreground="{DynamicResource SecondaryText}"
+                                       VerticalAlignment="Center"/>
+
+                            <ComboBox Grid.Column="1"
+                                      SelectedValue="{Binding DueTodayIntervalMinutes}"
+                                      SelectedValuePath="Content"
+                                      Margin="10,0,0,0">
+                                <ComboBoxItem Content="15"/>
+                                <ComboBoxItem Content="30"/>
+                                <ComboBoxItem Content="45"/>
+                                <ComboBoxItem Content="60"/>
+                                <ComboBoxItem Content="120"/>
+                            </ComboBox>
+
+                            <TextBlock Grid.Column="2" 
+                                       Text="минут" 
+                                       FontSize="14"
+                                       Foreground="{DynamicResource TertiaryText}"
+                                       VerticalAlignment="Center"
+                                       Margin="10,0,0,0"/>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="250"/>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Text="Просрочено:" 
+                                       FontSize="14"
+                                       Foreground="{DynamicResource SecondaryText}"
+                                       VerticalAlignment="Center"/>
+
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding OverdueIntervalMinutes, Mode=OneWay}"
+                                     IsReadOnly="True"
+                                     Background="{DynamicResource InputDisabled}"
+                                     Margin="10,0,0,0"/>
+
+                            <TextBlock Grid.Column="2" 
+                                       Text="минут (фиксировано)" 
+                                       FontSize="14"
+                                       Foreground="{DynamicResource TertiaryText}"
+                                       VerticalAlignment="Center"
+                                       Margin="10,0,0,0"/>
+                        </Grid>
+
+                        <TextBlock Text="⚠️ Для применения новой частоты проверки требуется перезапуск приложения" 
+                                   FontSize="13"
+                                   Foreground="{DynamicResource WarningText}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,15,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="{DynamicResource PrimaryBackground}"
+                        BorderBrush="{DynamicResource PrimaryBorder}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="20"
+                        Margin="0,0,0,20">
+                    <StackPanel>
+                        <TextBlock Text="👥 Управление исполнителями" 
+                                   FontSize="18" 
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryText}"
+                                   Margin="0,0,0,15"/>
+                        
+                        <Button Content="+ Добавить исполнителя"
+                                Command="{Binding AddExecutorCommand}"
+                                Background="{DynamicResource ButtonPrimary}"
+                                Foreground="White"
+                                FontSize="14"
+                                Padding="15,10"
+                                Margin="0,0,0,15"
+                                HorizontalAlignment="Left"
+                                Cursor="Hand">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}"
+                                                        CornerRadius="5"
+                                                        Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource ButtonPrimaryHover}"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
+                        <DataGrid ItemsSource="{Binding Executors}"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  HeadersVisibility="Column"
+                                  GridLinesVisibility="None"
+                                  Background="{DynamicResource DataGridBackground}"
+                                  RowBackground="{DynamicResource DataGridBackground}"
+                                  AlternatingRowBackground="{DynamicResource DataGridAlternatingRow}"
+                                  BorderThickness="0"
+                                  CanUserReorderColumns="False"
+                                  CanUserResizeRows="False"
+                                  SelectionMode="Single">
+                            <DataGrid.ColumnHeaderStyle>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="Background" Value="{DynamicResource DataGridHeaderBackground}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource DataGridHeaderText}"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="Padding" Value="10,8"/>
+                                    <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBorder}"/>
+                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                </Style>
+                            </DataGrid.ColumnHeaderStyle>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="ФИО" 
+                                                    Binding="{Binding ShortName}" 
+                                                    Width="200">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource PrimaryText}"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Должность" 
+                                                    Binding="{Binding Position}" 
+                                                    Width="250">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource PrimaryText}"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTemplateColumn Width="40">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Content="✏️"
+                                                    Command="{Binding DataContext.EditExecutorCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    Background="{DynamicResource ButtonPrimary}"
+                                                    Foreground="White"
+                                                    FontSize="14"
+                                                    Padding="5"
+                                                    Cursor="Hand"
+                                                    ToolTip="Редактировать">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Setter Property="Template">
+                                                            <Setter.Value>
+                                                                <ControlTemplate TargetType="Button">
+                                                                    <Border Background="{TemplateBinding Background}"
+                                                                            CornerRadius="3"
+                                                                            Padding="{TemplateBinding Padding}">
+                                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                    </Border>
+                                                                </ControlTemplate>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                        <Style.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter Property="Background" Value="{DynamicResource ButtonPrimaryHover}"/>
+                                                            </Trigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Width="40">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Content="🗑️"
+                                                    Command="{Binding DataContext.DeleteExecutorCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    Background="{DynamicResource ButtonDanger}"
+                                                    Foreground="White"
+                                                    FontSize="14"
+                                                    Padding="5"
+                                                    Cursor="Hand"
+                                                    ToolTip="Удалить">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Setter Property="Template">
+                                                            <Setter.Value>
+                                                                <ControlTemplate TargetType="Button">
+                                                                    <Border Background="{TemplateBinding Background}"
+                                                                            CornerRadius="3"
+                                                                            Padding="{TemplateBinding Padding}">
+                                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                    </Border>
+                                                                </ControlTemplate>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                        <Style.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter Property="Background" Value="{DynamicResource ButtonDangerHover}"/>
+                                                            </Trigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="{DynamicResource PrimaryBackground}"
+                        BorderBrush="{DynamicResource PrimaryBorder}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="20"
+                        Margin="0,0,0,20">
+                    <StackPanel>
+                        <TextBlock Text="🏢 Управление организациями" 
+                                   FontSize="18" 
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryText}"
+                                   Margin="0,0,0,15"/>
+                        
+                        <Button Content="+ Добавить организацию"
+                                Command="{Binding AddDepartmentCommand}"
+                                Background="{DynamicResource ButtonPrimary}"
+                                Foreground="White"
+                                FontSize="14"
+                                Padding="15,10"
+                                Margin="0,0,0,15"
+                                HorizontalAlignment="Left"
+                                Cursor="Hand">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}"
+                                                        CornerRadius="5"
+                                                        Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource ButtonPrimaryHover}"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
+                        <DataGrid ItemsSource="{Binding Departments}"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  HeadersVisibility="Column"
+                                  GridLinesVisibility="None"
+                                  Background="{DynamicResource DataGridBackground}"
+                                  RowBackground="{DynamicResource DataGridBackground}"
+                                  AlternatingRowBackground="{DynamicResource DataGridAlternatingRow}"
+                                  BorderThickness="0"
+                                  CanUserReorderColumns="False"
+                                  CanUserResizeRows="False"
+                                  SelectionMode="Single">
+                            <DataGrid.ColumnHeaderStyle>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="Background" Value="{DynamicResource DataGridHeaderBackground}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource DataGridHeaderText}"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="Padding" Value="10,8"/>
+                                    <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBorder}"/>
+                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                </Style>
+                            </DataGrid.ColumnHeaderStyle>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Укороченное наименование" 
+                                                    Binding="{Binding ShortName}" 
+                                                    Width="250">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource PrimaryText}"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Полное наименование" 
+                                                    Binding="{Binding FullName}" 
+                                                    Width="350">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource PrimaryText}"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTemplateColumn Width="40">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Content="✏️"
+                                                    Command="{Binding DataContext.EditDepartmentCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    Background="{DynamicResource ButtonPrimary}"
+                                                    Foreground="White"
+                                                    FontSize="14"
+                                                    Padding="5"
+                                                    Cursor="Hand"
+                                                    ToolTip="Редактировать">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Setter Property="Template">
+                                                            <Setter.Value>
+                                                                <ControlTemplate TargetType="Button">
+                                                                    <Border Background="{TemplateBinding Background}"
+                                                                            CornerRadius="3"
+                                                                            Padding="{TemplateBinding Padding}">
+                                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                    </Border>
+                                                                </ControlTemplate>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                        <Style.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter Property="Background" Value="{DynamicResource ButtonPrimaryHover}"/>
+                                                            </Trigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Width="40">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Content="🗑️"
+                                                    Command="{Binding DataContext.DeleteDepartmentCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    Background="{DynamicResource ButtonDanger}"
+                                                    Foreground="White"
+                                                    FontSize="14"
+                                                    Padding="5"
+                                                    Cursor="Hand"
+                                                    ToolTip="Удалить">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Setter Property="Template">
+                                                            <Setter.Value>
+                                                                <ControlTemplate TargetType="Button">
+                                                                    <Border Background="{TemplateBinding Background}"
+                                                                            CornerRadius="3"
+                                                                            Padding="{TemplateBinding Padding}">
+                                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                    </Border>
+                                                                </ControlTemplate>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                        <Style.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter Property="Background" Value="{DynamicResource ButtonDangerHover}"/>
+                                                            </Trigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="{DynamicResource PrimaryBackground}"
+                        BorderBrush="{DynamicResource PrimaryBorder}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="20"
+                        Margin="0,0,0,20">
+                    <StackPanel>
+                        <TextBlock Text="🗂️ Управление кэшем" 
+                                   FontSize="18" 
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryText}"
+                                   Margin="0,0,0,15"/>
+                        
+                        <Button Content="📊 Информация о кэше"
+                                Command="{Binding ShowCacheInfoCommand}"
+                                Background="{DynamicResource AccentPurple}"
+                                Foreground="White"
+                                FontSize="14"
+                                Padding="15,10"
+                                HorizontalAlignment="Left"
+                                Cursor="Hand">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}"
+                                                        CornerRadius="5"
+                                                        Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource AccentPurple}"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="{DynamicResource PrimaryBackground}"
+                        BorderBrush="{DynamicResource PrimaryBorder}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="20"
+                        Margin="0,0,0,20">
+                    <StackPanel>
+                        <TextBlock Text="💾 Управление базой данных" 
+                                   FontSize="18" 
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryText}"
+                                   Margin="0,0,0,15"/>
+                        
+                        <Button Content="ℹ️ Текущая база данных"
+                                Command="{Binding ShowDatabaseInfoCommand}"
+                                Background="{DynamicResource ButtonSuccess}"
+                                Foreground="White"
+                                FontSize="14"
+                                Padding="15,10"
+                                Margin="0,0,0,10"
+                                HorizontalAlignment="Left"
+                                Cursor="Hand">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}"
+                                                        CornerRadius="5"
+                                                        Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource ButtonSuccessHover}"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
+                        <Button Content="💾 Создать резервную копию"
+                                Command="{Binding CreateBackupCommand}"
+                                Background="{DynamicResource ButtonSuccess}"
+                                Foreground="White"
+                                FontSize="14"
+                                Padding="15,10"
+                                Margin="0,0,0,10"
+                                HorizontalAlignment="Left"
+                                Cursor="Hand">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}"
+                                                        CornerRadius="5"
+                                                        Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource AccentPurple}"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
+                        <Button Content="📤 Экспорт базы данных"
+                                Command="{Binding ExportDatabaseCommand}"
+                                Background="{DynamicResource ButtonWarning}"
+                                Foreground="White"
+                                FontSize="14"
+                                Padding="15,10"
+                                Margin="0,0,0,10"
+                                HorizontalAlignment="Left"
+                                Cursor="Hand">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}"
+                                                        CornerRadius="5"
+                                                        Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource ButtonWarningHover}"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
+                        <Button Content="🆕 Создать новую базу данных"
+                                Command="{Binding CreateNewDatabaseCommand}"
+                                Background="{DynamicResource ButtonPrimary}"
+                                Foreground="White"
+                                FontSize="14"
+                                Padding="15,10"
+                                Margin="0,0,0,10"
+                                HorizontalAlignment="Left"
+                                Cursor="Hand">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}"
+                                                        CornerRadius="5"
+                                                        Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource ButtonPrimaryHover}"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
+                        <Button Content="🔗 Подключиться к существующей БД"
+                                Command="{Binding ConnectToDatabaseCommand}"
+                                Background="{DynamicResource AccentPurple}"
+                                Foreground="White"
+                                FontSize="14"
+                                Padding="15,10"
+                                HorizontalAlignment="Left"
+                                Cursor="Hand">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}"
+                                                        CornerRadius="5"
+                                                        Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource AccentPurple}"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
+                        <Button Content="🔄 Сбросить путь к БД"
+                                Command="{Binding ResetDatabasePathCommand}"
+                                Background="#FF9800"
+                                Foreground="White"
+                                FontSize="14"
+                                Padding="15,10"
+                                HorizontalAlignment="Left"
+                                Cursor="Hand"
+                                Margin="0,10,0,0"
+                                ToolTip="Вернуться к использованию базы данных по умолчанию">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}"
+                                                        CornerRadius="5"
+                                                        Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#F57C00"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

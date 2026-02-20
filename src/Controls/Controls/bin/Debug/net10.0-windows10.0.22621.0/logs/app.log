@@ -1,0 +1,10 @@
+=== Log started at 2026-02-19 11:42:57 ===
+[2026-02-19 11:42:57] ========== ЗАПУСК ПРИЛОЖЕНИЯ ==========
+[2026-02-19 11:42:57] [App] Начало проверки подключения к базе данных
+[2026-02-19 11:42:57] [DatabaseConnectionManager] Начало проверки подключения к: C:\Users\Михаил\Desktop\controls\ControlsKO\src\ControlsKO\ControlsKO\bin\Debug\net10.0-windows10.0.22621.0\database\controls.db
+[2026-02-19 11:42:57] [DatabaseConnectionManager] БД доступна сразу
+[2026-02-19 11:42:57] [App] Подключение к БД успешно установлено
+[2026-02-19 11:42:58] Инициализация БД: C:\Users\Михаил\Desktop\controls\ControlsKO\src\ControlsKO\ControlsKO\bin\Debug\net10.0-windows10.0.22621.0\database\controls.db
+[2026-02-19 11:42:58] Файл БД существует, подключение...
+[2026-02-19 11:42:58] БД успешно инициализирована
+[2026-02-19 11:42:58] [App] Главное окно создано и отображено

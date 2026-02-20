@@ -1,0 +1,266 @@
+﻿<UserControl x:Class="Controls.Views.CalendarView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="800"
+             Background="{DynamicResource PrimaryBackground}">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="Календарь заданий" 
+                   FontSize="24" 
+                   FontWeight="Bold" 
+                   Foreground="{DynamicResource PrimaryText}"
+                   Margin="0,0,0,20"/>
+
+        <Grid Grid.Row="1" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0"
+                    Content="◀"
+                    Command="{Binding PreviousMonthCommand}"
+                    Background="{DynamicResource ButtonPrimary}"
+                    Foreground="White"
+                    FontSize="16"
+                    Width="40" Height="40"
+                    BorderThickness="0"
+                    Cursor="Hand"
+                    Margin="0,0,10,0">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            CornerRadius="5">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource ButtonPrimaryHover}"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+
+            <Border Grid.Column="1"
+                    Background="Transparent"
+                    Cursor="Hand"
+                    ToolTip="Кликните для быстрого выбора месяца и года">
+                <Border.InputBindings>
+                    <MouseBinding Gesture="LeftClick" Command="{Binding OpenMonthYearPickerCommand}"/>
+                </Border.InputBindings>
+                <TextBlock Text="{Binding MonthYearDisplay}"
+                           FontSize="20"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource PrimaryText}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource ButtonPrimary}"/>
+                                    <Setter Property="TextDecorations" Value="Underline"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Border>
+
+            <Button Grid.Column="2"
+                    Content="▶"
+                    Command="{Binding NextMonthCommand}"
+                    Background="{DynamicResource ButtonPrimary}"
+                    Foreground="White"
+                    FontSize="16"
+                    Width="40" Height="40"
+                    BorderThickness="0"
+                    Cursor="Hand"
+                    Margin="0,0,10,0">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            CornerRadius="5">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource ButtonPrimaryHover}"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+
+            <Button Grid.Column="3"
+                    Content="Сегодня"
+                    Command="{Binding TodayCommand}"
+                    Background="{DynamicResource ButtonSuccess}"
+                    Foreground="White"
+                    FontSize="13"
+                    Padding="15,10"
+                    BorderThickness="0"
+                    Cursor="Hand">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            CornerRadius="5"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource ButtonSuccessHover}"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+        </Grid>
+
+        <Grid Grid.Row="2" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0" Text="Пн" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource SecondaryText}"/>
+            <TextBlock Grid.Column="1" Text="Вт" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource SecondaryText}"/>
+            <TextBlock Grid.Column="2" Text="Ср" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource SecondaryText}"/>
+            <TextBlock Grid.Column="3" Text="Чт" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource SecondaryText}"/>
+            <TextBlock Grid.Column="4" Text="Пт" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource SecondaryText}"/>
+            <TextBlock Grid.Column="5" Text="Сб" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource ButtonDanger}"/>
+            <TextBlock Grid.Column="6" Text="Вс" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource ButtonDanger}"/>
+        </Grid>
+
+        <ItemsControl Grid.Row="3" ItemsSource="{Binding CalendarDays}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Columns="7" Rows="6"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border BorderBrush="{DynamicResource SecondaryBorder}" 
+                            BorderThickness="1" 
+                            Margin="2"
+                            Padding="8"
+                            ToolTip="{Binding TasksTooltip}"
+                            Cursor="Hand">
+                        <Border.InputBindings>
+                            <MouseBinding MouseAction="LeftClick" 
+                                          Command="{Binding DataContext.DateClickedCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                          CommandParameter="{Binding}"/>
+                        </Border.InputBindings>
+                        
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="{DynamicResource PrimaryBackground}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsToday}" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource TertiaryBackground}"/>
+                                        <Setter Property="BorderBrush" Value="{DynamicResource ButtonPrimary}"/>
+                                        <Setter Property="BorderThickness" Value="2"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding HasTasks}" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource WarningBackground}"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding HasOverdueTasks}" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource CalendarOverdueBackground}"/>
+                                        <Setter Property="BorderBrush" Value="{DynamicResource CalendarOverdueBorder}"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsCurrentMonth}" Value="False">
+                                        <Setter Property="Background" Value="{DynamicResource TertiaryBackground}"/>
+                                    </DataTrigger>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource DataGridSelectedRow}"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0"
+                                       Text="{Binding Day}"
+                                       FontSize="14"
+                                       HorizontalAlignment="Right"
+                                       VerticalAlignment="Top">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{DynamicResource PrimaryText}"/>
+                                        <Setter Property="FontWeight" Value="Normal"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsCurrentMonth}" Value="False">
+                                                <Setter Property="Foreground" Value="{DynamicResource PrimaryBorder}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsToday}" Value="True">
+                                                <Setter Property="FontWeight" Value="Bold"/>
+                                                <Setter Property="Foreground" Value="{DynamicResource ButtonPrimary}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+
+                            <StackPanel Grid.Row="1" 
+                                        VerticalAlignment="Center" 
+                                        HorizontalAlignment="Center"
+                                        Visibility="{Binding HasTasks, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <Ellipse Width="8" Height="8" 
+                                         Fill="{DynamicResource ButtonDanger}"
+                                         Margin="0,5,0,2"/>
+                                <TextBlock Text="{Binding TaskCount}"
+                                           FontSize="10"
+                                           FontWeight="Bold"
+                                           Foreground="{DynamicResource ButtonDanger}"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </Grid>
+</UserControl>
