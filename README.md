@@ -3,7 +3,6 @@
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-blue.svg)](https://dotnet.microsoft.com/download)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 Controls — WPF-приложение для управления контрольными заданиями, отслеживания их исполнения и хранения документов организации.
 
