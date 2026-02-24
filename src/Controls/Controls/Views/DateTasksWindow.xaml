@@ -4,7 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         mc:Ignorable="d"
-        Title="Задания на дату" 
+        Title="Задачи на дату" 
         Height="600" Width="800"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource SecondaryBackground}">
@@ -17,7 +17,7 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,25">
-            <TextBlock Text="📅 Задания на дату" 
+            <TextBlock Text="📅 Задачи на дату" 
                        FontSize="24" 
                        FontWeight="Bold" 
                        Foreground="{DynamicResource PrimaryText}"

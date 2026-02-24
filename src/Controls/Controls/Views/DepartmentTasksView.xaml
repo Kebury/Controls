@@ -28,11 +28,11 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,20">
-            <TextBlock Text="📝➡️ Задания в организации" 
+            <TextBlock Text="📝➡️ Задачи в организации" 
                        FontSize="28" 
                        FontWeight="Bold"
                        Foreground="{DynamicResource PrimaryText}"/>
-            <TextBlock Text="Управление заданиями, направленными в организации" 
+            <TextBlock Text="Управление задачами, направленными в организации" 
                        FontSize="14" 
                        Foreground="{DynamicResource SecondaryText}"
                        Margin="0,5,0,0"/>
@@ -45,7 +45,7 @@
                     FontSize="13"
                     BorderThickness="0"
                     Cursor="Hand"
-                    ToolTip="Задания, которые нужно исполнить сегодня">
+                    ToolTip="Задачи, которые нужно исполнить сегодня">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="📅 Сегодня" VerticalAlignment="Center"/>
                     <Border Background="{DynamicResource ButtonPrimary}" 
@@ -94,7 +94,7 @@
                     FontSize="13"
                     BorderThickness="0"
                     Cursor="Hand"
-                    ToolTip="Просроченные задания, срок исполнения вышел">
+                    ToolTip="Просроченные задачи, срок исполнения вышел">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="⚠️ Просроченные" VerticalAlignment="Center"/>
                     <Border Background="{DynamicResource PrimaryBackground}" 
@@ -143,9 +143,9 @@
                     FontSize="13"
                     BorderThickness="0"
                     Cursor="Hand"
-                    ToolTip="Все задания, находящиеся на исполнении">
+                    ToolTip="Все задачи, находящиеся на исполнении">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="📋 Все задания" VerticalAlignment="Center"/>
+                    <TextBlock Text="📋 Все задачи" VerticalAlignment="Center"/>
                     <Border Background="{DynamicResource ButtonPrimary}" 
                             CornerRadius="10" 
                             Padding="6,2"

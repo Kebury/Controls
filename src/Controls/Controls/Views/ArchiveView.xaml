@@ -52,17 +52,17 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,20">
-            <TextBlock Text="📦 Архив заданий" 
+            <TextBlock Text="📦 Архив задач" 
                        FontSize="28" 
                        FontWeight="Bold"
                        Foreground="{DynamicResource PrimaryText}"/>
-            <TextBlock Text="История всех завершённых заданий" 
+            <TextBlock Text="История всех завершённых задач" 
                        FontSize="14" 
                        Foreground="{DynamicResource SecondaryText}"
                        Margin="0,5,0,0"/>
             
             <StackPanel Orientation="Horizontal" Margin="0,15,0,0">
-                <Button Content="Задания организации"
+                <Button Content="Задачи организации"
                         Command="{Binding ShowControlTasksCommand}"
                         FontSize="13"
                         Height="36"
@@ -103,7 +103,7 @@
                     </Button.Style>
                 </Button>
                 
-                <Button Content="Задания в организации"
+                <Button Content="Задачи в организации"
                         Command="{Binding ShowDepartmentTasksCommand}"
                         FontSize="13"
                         Height="36"

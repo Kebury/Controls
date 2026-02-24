@@ -18,19 +18,80 @@ namespace Controls;
 
 public partial class App : Application
 {
+    private const string MutexName = "Controls.TaskManager.SingleInstance";
+
     private static Mutex? _mutex;
+    private static bool _mutexOwned = false;
+
+    [DllImport("user32.dll")]
+    private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+    [DllImport("user32.dll")]
+    private static extern bool IsIconic(IntPtr hWnd);
+
+    private const int SW_RESTORE = 9;
+
+    /// <summary>
+    /// Находит главное окно уже запущенного экземпляра приложения и выводит его на передний план.
+    /// </summary>
+    private static void BringExistingInstanceToFront()
+    {
+        try
+        {
+            var currentId = Process.GetCurrentProcess().Id;
+            var currentName = Process.GetCurrentProcess().ProcessName;
+
+            foreach (var proc in Process.GetProcessesByName(currentName))
+            {
+                if (proc.Id == currentId)
+                    continue;
+
+                var hWnd = proc.MainWindowHandle;
+                if (hWnd == IntPtr.Zero)
+                    continue;
+
+                if (IsIconic(hWnd))
+                    ShowWindow(hWnd, SW_RESTORE);
+
+                SetForegroundWindow(hWnd);
+                break;
+            }
+        }
+        catch
+        {
+        }
+    }
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
-        _mutex = new Mutex(true, "Controls.TaskManager.SingleInstance", out bool createdNew);
+        bool createdNew;
+        try
+        {
+            _mutex = new Mutex(true, MutexName, out createdNew);
+        }
+        catch (AbandonedMutexException)
+        {
+            // Предыдущий экземпляр аварийно завершился (например, убит через диспетчер задач).
+            // ОС автоматически передал нам владение мьютексом — продолжаем как единственный экземпляр.
+            createdNew = true;
+        }
+
         if (!createdNew)
         {
-            MessageBox.Show("Приложение уже запущено.", "Задачи", MessageBoxButton.OK, MessageBoxImage.Information);
+            // Другой экземпляр уже запущен — выводим его на передний план и завершаемся
+            _mutex?.Dispose();
+            _mutex = null;
+            BringExistingInstanceToFront();
             Shutdown();
             return;
         }
+
+        _mutexOwned = true;
         
         RenderOptions.ProcessRenderMode = System.Windows.Interop.RenderMode.Default;
         
@@ -175,6 +236,12 @@ public partial class App : Application
             MessageBox.Show($"Ошибка приложения:\n{args.Exception.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             args.Handled = true;
         };
+
+        // Создаём главное окно вручную (StartupUri удалён, чтобы окно не появлялось
+        // до проверки mutex при повторном запуске)
+        var mainWindow = new MainWindow();
+        MainWindow = mainWindow;
+        mainWindow.Show();
     }
 
     private static void EnsureDepartmentTaskDepartmentsTable(ControlsDbContext context)
@@ -501,6 +568,18 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        // Гарантированный выход: если что-то в очистке зависнет, через 5 с процесс всё равно завершится
+        var killer = new System.Threading.Thread(() =>
+        {
+            System.Threading.Thread.Sleep(5000);
+            Environment.Exit(0);
+        })
+        {
+            IsBackground = true,
+            Name = "ForceExitWatchdog"
+        };
+        killer.Start();
+
         try
         {
             Services.NetworkDatabaseMonitor.Instance.Stop();
@@ -517,11 +596,14 @@ public partial class App : Application
         {
         }
 
-        _mutex?.ReleaseMutex();
-        _mutex?.Dispose();
+        if (_mutexOwned)
+        {
+            try { _mutex?.ReleaseMutex(); } catch { }
+        }
+        try { _mutex?.Dispose(); } catch { }
 
         base.OnExit(e);
-        
+
         Environment.Exit(0);
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -166,6 +167,7 @@ namespace Controls.ViewModels
                 if (SetProperty(ref _organizationName, value))
                 {
                     OnPropertyChanged(nameof(AppTitle));
+                    OnPropertyChanged(nameof(TasksSectionTitle));
                 }
             }
         }
@@ -174,6 +176,36 @@ namespace Controls.ViewModels
         /// Заголовок окна приложения
         /// </summary>
         public string AppTitle => $"Задачи — {_organizationName}";
+
+        /// <summary>
+        /// Название раздела с задачами организации (динамически изменяется вместе с названием организации)
+        /// </summary>
+        public string TasksSectionTitle => $"Задачи {_organizationName}";
+
+        /// <summary>
+        /// Версия приложения, читаемая из метаданных сборки (FileVersion)
+        /// </summary>
+        public string AppVersion
+        {
+            get
+            {
+                try
+                {
+                    var assembly = Assembly.GetExecutingAssembly();
+                    var fvi = System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly.Location);
+                    // Отображаем без четвёртой цифры, если она нулевая: 1.0.1.0 → v1.0.1
+                    var v = fvi.FileVersion ?? "1.0";
+                    var parts = v.Split('.');
+                    if (parts.Length >= 3 && parts[^1] == "0")
+                        v = string.Join('.', parts[..^1]);
+                    return $"v{v}";
+                }
+                catch
+                {
+                    return "v1.0";
+                }
+            }
+        }
 
         public ICommand ShowTasksCommand { get; }
         public ICommand ShowDepartmentTasksCommand { get; }

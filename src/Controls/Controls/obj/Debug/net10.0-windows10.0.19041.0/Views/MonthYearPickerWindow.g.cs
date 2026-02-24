@@ -68,7 +68,7 @@ namespace Controls.Views {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/Controls;V1.0.1.0;component/views/monthyearpickerwindow.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/Controls;V0.3.0.0;component/views/monthyearpickerwindow.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\..\Views\MonthYearPickerWindow.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);

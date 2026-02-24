@@ -64,7 +64,7 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="250"/>
+            <ColumnDefinition Width="280"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
@@ -106,7 +106,7 @@
                             Margin="10,5">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="📝" FontSize="18" Margin="0,0,10,0"/>
-                            <TextBlock Text="Задания организации" FontSize="14"/>
+                            <TextBlock Text="{Binding TasksSectionTitle}" FontSize="14"/>
                         </StackPanel>
                     </Button>
 
@@ -115,7 +115,7 @@
                             Margin="10,5">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="📝➡️" FontSize="18" Margin="0,0,10,0"/>
-                            <TextBlock Text="Задания в организации" FontSize="14"/>
+                            <TextBlock Text="Задачи в организации" FontSize="14"/>
                         </StackPanel>
                     </Button>
 
@@ -177,7 +177,7 @@
                                FontSize="10" 
                                Foreground="{DynamicResource SidebarSecondaryText}"
                                HorizontalAlignment="Center"/>
-                    <TextBlock Text="v1.0.1" 
+                    <TextBlock Text="{Binding AppVersion}" 
                                FontSize="10" 
                                Foreground="{DynamicResource SidebarSecondaryText}"
                                HorizontalAlignment="Center"

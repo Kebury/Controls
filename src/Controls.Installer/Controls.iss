@@ -3,7 +3,7 @@
 ; Поддержка обновлений с сохранением базы данных
 
 #define MyAppName "Controls"
-#define MyAppVersion "1.0.1"
+#define MyAppVersion "0.3"
 #define MyAppPublisher "Отдел Криминалистики"
 #define MyAppURL "https://github.com/your-repo/Controls"
 #define MyAppExeName "Controls.exe"
@@ -108,17 +108,26 @@ function CloseRunningApplication(): Boolean;
 var
   ResultCode: Integer;
   Retries: Integer;
+  ProcessRunning: Boolean;
 begin
   Result := True;
+
+  // Принудительно завершаем процесс
+  Exec('taskkill.exe', '/F /IM "{#MyAppExeName}"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+
+  // Ждём полного завершения процесса (до 10 секунд)
   Retries := 0;
-  
-  // Пытаемся закрыть приложение через taskkill
-  while (Retries < 3) and (FindWindowByClassName('Window') <> 0) do
-  begin
-    Exec('taskkill.exe', '/F /IM "{#MyAppExeName}"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  repeat
     Sleep(1000);
+    // Проверяем через попытку запустить заново и сразу завершить:
+    // если процесс ещё жив, taskkill вернёт код 0; если уже нет — код 128
+    Exec('taskkill.exe', '/F /IM "{#MyAppExeName}"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    ProcessRunning := (ResultCode = 0);
     Retries := Retries + 1;
-  end;
+  until (not ProcessRunning) or (Retries >= 10);
+
+  if ProcessRunning then
+    Result := False;
 end;
 
 // Проверка установленной версии через реестр
@@ -216,8 +225,8 @@ begin
   begin
     IsUpdate := True;
     
-    // Проверяем, запущено ли приложение
-    if CheckForMutexes('{#MyAppId}') then
+    // Проверяем, запущено ли приложение (используем точное имя мьютекса, которое регистрирует само приложение)
+    if CheckForMutexes('Controls.TaskManager.SingleInstance') then
     begin
       if MsgBox(ExpandConstant('{cm:ApplicationRunning,' + '{#MyAppName}' + '}'), mbConfirmation, MB_OKCANCEL) = IDOK then
       begin

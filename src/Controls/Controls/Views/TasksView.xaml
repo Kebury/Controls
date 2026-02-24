@@ -20,11 +20,11 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,20">
-            <TextBlock Text="📝 Задания организации" 
+            <TextBlock Text="{Binding DataContext.TasksSectionTitle, RelativeSource={RelativeSource AncestorType=Window}, StringFormat='📝 {0}'}" 
                        FontSize="28" 
                        FontWeight="Bold"
                        Foreground="{DynamicResource PrimaryText}"/>
-            <TextBlock Text="Управление текущими заданиями" 
+            <TextBlock Text="Управление текущими задачами" 
                        FontSize="14" 
                        Foreground="{DynamicResource SecondaryText}"
                        Margin="0,5,0,0"/>
@@ -86,7 +86,7 @@
                     FontSize="13"
                     BorderThickness="0"
                     Cursor="Hand"
-                    ToolTip="Все задания, срок исполнения которых просрочен">
+                    ToolTip="Все задачи, срок исполнения которых просрочен">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="⚠️ Просроченные" VerticalAlignment="Center"/>
                     <Border Background="{DynamicResource PrimaryBackground}" 
@@ -135,9 +135,9 @@
                     FontSize="13"
                     BorderThickness="0"
                     Cursor="Hand"
-                    ToolTip="Все задания, находящиеся на исполнении">
+                    ToolTip="Все задачи, находящиеся на исполнении">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="📋 Все задания" VerticalAlignment="Center"/>
+                    <TextBlock Text="📋 Все задачи" VerticalAlignment="Center"/>
                     <Border Background="{DynamicResource ButtonPrimary}" 
                             CornerRadius="10" 
                             Padding="6,2"

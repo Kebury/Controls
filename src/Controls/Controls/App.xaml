@@ -5,8 +5,7 @@
              xmlns:helpers="clr-namespace:Controls.Helpers"
              xmlns:vm="clr-namespace:Controls.ViewModels"
              xmlns:views="clr-namespace:Controls.Views"
-             xmlns:sys="clr-namespace:System;assembly=mscorlib"
-             StartupUri="MainWindow.xaml">
+             xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

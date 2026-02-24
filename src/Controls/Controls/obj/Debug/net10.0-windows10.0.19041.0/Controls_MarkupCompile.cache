@@ -1,5 +1,5 @@
 ﻿Controls
-1.0.1.0
+0.3.0.0
 
 winexe
 C#
@@ -16,5 +16,5 @@ C:\Users\Михаил\Desktop\GitHub\controls\Controls\src\Controls\Controls\App
 236-793218203
 MainWindow.xaml;Themes\DarkTheme.xaml;Themes\LightTheme.xaml;Views\AddDepartmentWindow.xaml;Views\AddExecutorWindow.xaml;Views\ArchiveView.xaml;Views\CalendarView.xaml;Views\DatabaseLoadingDialog.xaml;Views\DatabaseReconnectingWindow.xaml;Views\DatabaseUnavailableDialog.xaml;Views\DateTasksWindow.xaml;Views\DepartmentTaskDetailWindow.xaml;Views\DepartmentTaskEditWindow.xaml;Views\DepartmentTasksView.xaml;Views\MonthYearPickerWindow.xaml;Views\NotificationsView.xaml;Views\OutgoingReportDialog.xaml;Views\OverdueReportDialog.xaml;Views\SettingsView.xaml;Views\TaskDetailWindow.xaml;Views\TaskEditWindow.xaml;Views\TasksView.xaml;Views\WorkingOrderDialog.xaml;
 
-False
+True
 
