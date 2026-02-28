@@ -24,6 +24,9 @@ public partial class App : Application
             ? $"{v.Major}.{v.Minor}.{v.Build}"
             : "?.?.?");
 
+    // ── Запуск свёрнутым (из автозагрузки через --minimized) ─────────────────
+    public static bool StartMinimized { get; private set; }
+
     // ── Защита от повторного запуска ─────────────────────────────────────────
     private const string MutexName       = "Controls.TaskManager.SingleInstance";
     private const string ShowWindowEvent = "Controls.TaskManager.ShowWindow";
@@ -32,6 +35,9 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        // Читаем аргументы командной строки
+        StartMinimized = e.Args.Contains("--minimized", StringComparer.OrdinalIgnoreCase);
+
         // ── 1. Проверка единственного экземпляра ─────────────────────────
         // Создаём мьютекс БЕЗ немедленного захвата (initiallyOwned:false),
         // затем пробуем захватить с нулевым ожиданием — это единственный
@@ -224,7 +230,17 @@ public partial class App : Application
         // до проверки mutex при повторном запуске)
         var mainWindow = new MainWindow();
         MainWindow = mainWindow;
-        mainWindow.Show();
+        // Если запущено с --minimized (автозагрузка) — показываем окно на ммиг для
+        // инициализации, затем сразу скрываем в трей
+        if (StartMinimized)
+        {
+            mainWindow.Show();
+            mainWindow.Hide();
+        }
+        else
+        {
+            mainWindow.Show();
+        }
     }
 
     private static void EnsureDepartmentTaskDepartmentsTable(ControlsDbContext context)

@@ -70,29 +70,7 @@ namespace Controls.Services
                         _taskbarIcon.Icon = _defaultIcon;
                         _taskbarIcon.ToolTipText = "Задачи";
                     }
-                    
-                    RefreshTrayIcon();
                 });
-            }
-            catch
-            {
-            }
-        }
-
-        /// <summary>
-        /// Принудительное обновление видимости иконки трея
-        /// Помогает предотвратить "зависание" трея после длительного нахождения в трее
-        /// </summary>
-        private void RefreshTrayIcon()
-        {
-            try
-            {
-                var currentVisibility = _taskbarIcon.Visibility;
-                if (currentVisibility == System.Windows.Visibility.Visible)
-                {
-                    _taskbarIcon.Visibility = System.Windows.Visibility.Collapsed;
-                    _taskbarIcon.Visibility = System.Windows.Visibility.Visible;
-                }
             }
             catch
             {

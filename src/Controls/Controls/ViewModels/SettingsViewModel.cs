@@ -706,15 +706,26 @@ namespace Controls.ViewModels
 
         private bool IsAutoStartSet()
         {
+            // Проверяем реестровую запись Run (через настройки приложения)
             try
             {
                 using var key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", false);
-                return key?.GetValue("Controls.TaskManager") != null;
+                if (key?.GetValue("Controls.TaskManager") != null)
+                    return true;
             }
-            catch
+            catch { }
+
+            // Проверяем ярлык в папке автозагрузки (может быть создан установщиком)
+            try
             {
-                return false;
+                var startupFolder = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
+                var shortcutPath = System.IO.Path.Combine(startupFolder, "Controls.lnk");
+                if (System.IO.File.Exists(shortcutPath))
+                    return true;
             }
+            catch { }
+
+            return false;
         }
 
         private void SetAutoStart(bool enable)
@@ -733,13 +744,25 @@ namespace Controls.ViewModels
                     var exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
                     if (!string.IsNullOrEmpty(exePath))
                     {
-                        key.SetValue("Controls.TaskManager", $"\"{exePath}\"");
+                        key.SetValue("Controls.TaskManager", $"\"{exePath}\" --minimized");
                         MessageBox.Show("Автозапуск включен", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                 }
                 else
                 {
+                    // Удаляем запись реестра
                     key.DeleteValue("Controls.TaskManager", false);
+
+                    // Также удаляем ярлык из папки автозагрузки, если он был создан установщиком
+                    try
+                    {
+                        var startupFolder = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
+                        var shortcutPath = System.IO.Path.Combine(startupFolder, "Controls.lnk");
+                        if (System.IO.File.Exists(shortcutPath))
+                            System.IO.File.Delete(shortcutPath);
+                    }
+                    catch { }
+
                     MessageBox.Show("Автозапуск отключен", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
