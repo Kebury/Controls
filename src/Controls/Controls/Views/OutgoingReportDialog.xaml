@@ -6,8 +6,13 @@
         mc:Ignorable="d"
         Title="Ввод данных исходящего ответа" 
         Height="300" Width="500"
+        MinHeight="260" MinWidth="400"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
+        ResizeMode="CanResizeWithGrip"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
         Background="{DynamicResource PrimaryBackground}">
     <Grid Margin="20">
         <Grid.RowDefinitions>

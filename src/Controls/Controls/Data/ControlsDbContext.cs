@@ -42,7 +42,12 @@ namespace Controls.Data
                 {
                     options.CommandTimeout(120);
                 });
-                
+
+                // Подавляем предупреждение EF Core 10 о расхождении снимка модели —
+                // миграции корректны, предупреждение не должно блокировать Migrate().
+                optionsBuilder.ConfigureWarnings(w =>
+                    w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+
                 optionsBuilder.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTrackingWithIdentityResolution);
                 
                 optionsBuilder.EnableSensitiveDataLogging(false);

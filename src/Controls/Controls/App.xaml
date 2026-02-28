@@ -14,6 +14,7 @@
             
             <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
             <helpers:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
+            <helpers:TaskTypeDisplayConverter x:Key="TaskTypeDisplayConverter"/>
             
             <local:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
             <helpers:InverseCountToVisibilityConverter x:Key="InverseCountToVisibilityConverter"/>

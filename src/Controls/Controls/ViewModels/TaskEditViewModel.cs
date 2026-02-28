@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Input;
 using System.IO;
@@ -12,6 +13,45 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Controls.ViewModels
 {
+    /// <summary>
+    /// Запись даты исполнения для типа "НесколькоРазВГод" (wrapper для binding)
+    /// </summary>
+    public class CustomDateEntry : ViewModelBase
+    {
+        private DateTime _date = DateTime.Today;
+        private int _hour = 23;
+        private int _minute = 59;
+
+        public DateTime Date
+        {
+            get => _date;
+            set => SetProperty(ref _date, value);
+        }
+
+        public int Hour
+        {
+            get => _hour;
+            set => SetProperty(ref _hour, Math.Max(0, Math.Min(23, value)));
+        }
+
+        public int Minute
+        {
+            get => _minute;
+            set => SetProperty(ref _minute, Math.Max(0, Math.Min(59, value)));
+        }
+
+        /// <summary>Полная дата+время для сериализации и расчёта срока</summary>
+        public DateTime FullDateTime => Date.Date.AddHours(_hour).AddMinutes(_minute).AddSeconds(59);
+
+        public CustomDateEntry() { }
+        public CustomDateEntry(DateTime date)
+        {
+            _date = date.Date;
+            _hour   = date.TimeOfDay == TimeSpan.Zero ? 23 : date.Hour;
+            _minute = date.TimeOfDay == TimeSpan.Zero ? 59 : date.Minute;
+        }
+    }
+
     public class TaskEditViewModel : ViewModelBase
     {
         private readonly ControlsDbContext _dbContext;
@@ -59,6 +99,21 @@ namespace Controls.ViewModels
 
                 _isLoadingExistingTask = false;
 
+                // Загружаем даты исполнения для типа НесколькоРазВГод
+                if (task.TaskType == TaskType.НесколькоРазВГод && !string.IsNullOrWhiteSpace(task.CustomDatesJson))
+                {
+                    try
+                    {
+                        var dates = JsonSerializer.Deserialize<List<DateTime>>(task.CustomDatesJson);
+                        if (dates != null)
+                        {
+                            foreach (var d in dates.OrderBy(x => x))
+                                CustomDates.Add(new CustomDateEntry(d));
+                        }
+                    }
+                    catch { /* ignore parse errors */ }
+                }
+
                 var docs = _dbContext.Documents.Where(d => d.ControlTaskId == task.Id).ToList();
                 foreach (var doc in docs)
                 {
@@ -92,6 +147,12 @@ namespace Controls.ViewModels
             
             RemoveDocumentCommand = new RelayCommand(doc => RemoveDocument(doc as Document));
             OpenDocumentCommand = new RelayCommand(doc => OpenDocument(doc as Document));
+
+            AddCustomDateCommand = new RelayCommand(_ => CustomDates.Add(new CustomDateEntry(DateTime.Today)));
+            RemoveCustomDateCommand = new RelayCommand(entry =>
+            {
+                if (entry is CustomDateEntry cde) CustomDates.Remove(cde);
+            });
         }
 
         private void LoadAssignees()
@@ -125,6 +186,12 @@ namespace Controls.ViewModels
         public bool IsArchived => _existingTask?.Status == "Исполнено";
         public bool CanEditFields => !IsArchived;
         public string WindowTitle => _isNewTask ? "Добавить новое задание" : (IsArchived ? "Просмотр задания (Архив)" : "Редактировать задание");
+
+        /// <summary>Коллекция дат для типа НесколькоРазВГод</summary>
+        public ObservableCollection<CustomDateEntry> CustomDates { get; } = new();
+
+        /// <summary>Труе == выбран тип НесколькоРазВГод</summary>
+        public bool IsMultipleTimesPerYear => SelectedTaskType == TaskType.НесколькоРазВГод;
 
         public string Title
         {
@@ -250,6 +317,7 @@ namespace Controls.ViewModels
             {
                 if (SetProperty(ref _selectedTaskType, value))
                 {
+                    OnPropertyChanged(nameof(IsMultipleTimesPerYear));
                     if (!_isLoadingExistingTask)
                     {
                         CalculateDueDate();
@@ -260,6 +328,17 @@ namespace Controls.ViewModels
 
         private void CalculateDueDate()
         {
+            // Для типа НесколькоРазВГод — срок берётся из первой даты списка
+            if (SelectedTaskType == TaskType.НесколькоРазВГод)
+            {
+                if (CustomDates.Count > 0)
+                {
+                    var first = CustomDates.OrderBy(d => d.FullDateTime).First();
+                    DueDate = first.FullDateTime;
+                }
+                return;
+            }
+
             switch (SelectedTaskType)
             {
                 case TaskType.Разовое:
@@ -309,6 +388,8 @@ namespace Controls.ViewModels
         public ICommand AttachSentReportDocumentCommand { get; }
         public ICommand RemoveDocumentCommand { get; }
         public ICommand OpenDocumentCommand { get; }
+        public ICommand AddCustomDateCommand { get; }
+        public ICommand RemoveCustomDateCommand { get; }
 
         public event Action<bool>? RequestClose;
 
@@ -353,7 +434,8 @@ namespace Controls.ViewModels
                         DueDate = DueDate,
                         TaskType = SelectedTaskType,
                         ImportancePriority = SelectedImportance,
-                        UrgencyPriority = UrgencyPriority.Обычно
+                        UrgencyPriority = UrgencyPriority.Обычно,
+                        CustomDatesJson = SerializeCustomDates()
                     };
 
                     _dbContext.ControlTasks.Add(newTask);
@@ -389,6 +471,7 @@ namespace Controls.ViewModels
                     _existingTask.DueDate = DueDate;
                     _existingTask.TaskType = SelectedTaskType;
                     _existingTask.ImportancePriority = SelectedImportance;
+                    _existingTask.CustomDatesJson = SerializeCustomDates();
 
                     _dbContext.Entry(_existingTask).State = EntityState.Modified;
 
@@ -434,6 +517,16 @@ namespace Controls.ViewModels
         private void Cancel()
         {
             RequestClose?.Invoke(false);
+        }
+
+        /// <summary>Сериализует CustomDates в JSON-строку для сохранения в БД</summary>
+        private string SerializeCustomDates()
+        {
+            if (SelectedTaskType != TaskType.НесколькоРазВГод || CustomDates.Count == 0)
+                return string.Empty;
+
+            var dates = CustomDates.Select(e => e.FullDateTime).OrderBy(d => d).ToList();
+            return JsonSerializer.Serialize(dates);
         }
 
         private void BrowseControlDocument()

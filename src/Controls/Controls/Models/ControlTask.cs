@@ -106,6 +106,12 @@ namespace Controls.Models
         public string IntermediateResponsesJson { get; set; } = string.Empty;
 
         /// <summary>
+        /// JSON массив дат исполнения для типа "НесколькоРазВГод" (формат: ["yyyy-MM-ddTHH:mm:ss", ...])
+        /// </summary>
+        [MaxLength(5000)]
+        public string CustomDatesJson { get; set; } = string.Empty;
+
+        /// <summary>
         /// Дата завершения
         /// </summary>
         public DateTime? CompletedDate { get; set; }
@@ -128,7 +134,7 @@ namespace Controls.Models
         /// <summary>
         /// Строковое представление типа задания
         /// </summary>
-        public string TaskTypeDisplay => TaskType.ToString();
+        public string TaskTypeDisplay => TaskType.GetDisplayName();
 
         /// <summary>
         /// Строковое представление важности
@@ -254,6 +260,33 @@ namespace Controls.Models
             if (!IsCyclicTask)
                 return DueDate;
             
+            // Для типа НесколькоРазВГод - выбираем следующую дату из списка пользователя
+            if (TaskType == TaskType.НесколькоРазВГод)
+            {
+                if (!string.IsNullOrWhiteSpace(CustomDatesJson))
+                {
+                    try
+                    {
+                        var dates = JsonSerializer.Deserialize<System.Collections.Generic.List<DateTime>>(CustomDatesJson);
+                        if (dates != null && dates.Count > 0)
+                        {
+                            var nextCustom = dates
+                                .Where(d => d.Date > DateTime.Now.Date)
+                                .OrderBy(d => d)
+                                .FirstOrDefault();
+
+                            if (nextCustom != default)
+                                return new DateTime(nextCustom.Year, nextCustom.Month, nextCustom.Day, 23, 59, 59);
+
+                            var first = dates.OrderBy(d => d).First();
+                            return new DateTime(first.Year + 1, first.Month, first.Day, 23, 59, 59);
+                        }
+                    }
+                    catch { /* fallthrough */ }
+                }
+                return DueDate;
+            }
+
             DateTime nextDate = TaskType switch
             {
                 TaskType.Ежедневное => DueDate.AddDays(1),

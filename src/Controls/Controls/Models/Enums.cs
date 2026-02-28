@@ -12,8 +12,21 @@
         Ежеквартальное,
         Полугодовое,
         Годовое,
+        НесколькоРазВГод,
         Обращение,
         Запрос
+    }
+
+    /// <summary>
+    /// Расширения для TaskType: человекочитаемые названия
+    /// </summary>
+    public static class TaskTypeExtensions
+    {
+        public static string GetDisplayName(this TaskType taskType) => taskType switch
+        {
+            TaskType.НесколькоРазВГод => "Несколько раз в год",
+            _ => taskType.ToString()
+        };
     }
 
     /// <summary>

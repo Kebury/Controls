@@ -7,8 +7,14 @@
         mc:Ignorable="d"
         Title="{Binding WindowTitle}" 
         Height="700" Width="900"
+        MinHeight="580" MinWidth="700"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource SecondaryBackground}"
+        ResizeMode="CanResizeWithGrip"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
         FocusManager.FocusedElement="{Binding ElementName=MainGrid}">
     
     <Grid x:Name="MainGrid" 
@@ -83,7 +89,13 @@
                                       FontSize="14"
                                       Padding="10"
                                       BorderBrush="{DynamicResource PrimaryBorder}"
-                                      BorderThickness="1"/>
+                                      BorderThickness="1">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Converter={StaticResource TaskTypeDisplayConverter}}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
                         </StackPanel>
 
                         <StackPanel Margin="0,0,0,15">
@@ -184,7 +196,9 @@
                                            FontSize="13" 
                                            Foreground="{DynamicResource SecondaryText}"
                                            Margin="0,0,0,5"/>
-                                <Grid>
+
+                                <!-- Одинарный режим: одна дата (скрывается для НесколькоРазВГод) -->
+                                <Grid Visibility="{Binding IsMultipleTimesPerYear, Converter={StaticResource InverseBoolToVisibilityConverter}}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
@@ -200,6 +214,7 @@
                                                 Cursor="Hand"
                                                 Margin="0,0,10,0"/>
 
+                                    <!-- Время -->
                                     <StackPanel Grid.Column="1" Orientation="Horizontal">
                                         <TextBox Text="{Binding DueTimeHour, UpdateSourceTrigger=PropertyChanged}"
                                                  IsEnabled="{Binding CanEditFields}"
@@ -233,6 +248,115 @@
                                                  PreviewTextInput="NumericTextBox_PreviewTextInput"/>
                                     </StackPanel>
                                 </Grid>
+
+                                <!-- Режим Несколько раз в год: список дат -->
+                                <StackPanel Visibility="{Binding IsMultipleTimesPerYear, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <ItemsControl ItemsSource="{Binding CustomDates}"
+                                                  HorizontalContentAlignment="Stretch">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,0,0,6">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <DatePicker Grid.Column="0"
+                                                                SelectedDate="{Binding Date, Mode=TwoWay}"
+                                                                FontSize="14"
+                                                                Padding="10"
+                                                                BorderBrush="{DynamicResource PrimaryBorder}"
+                                                                BorderThickness="1"
+                                                                Cursor="Hand"
+                                                                Margin="0,0,10,0"
+                                                                VerticalAlignment="Center"/>
+
+                                                    <!-- Время -->
+                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,8,0">
+                                                        <TextBox Text="{Binding Hour, UpdateSourceTrigger=PropertyChanged}"
+                                                                 Width="55" FontSize="14" Padding="8"
+                                                                 BorderBrush="{DynamicResource PrimaryBorder}" BorderThickness="1"
+                                                                 Margin="0,0,5,0" VerticalContentAlignment="Center"
+                                                                 HorizontalContentAlignment="Center"
+                                                                 ToolTip="Час (0-23)" MaxLength="2"
+                                                                 PreviewTextInput="NumericTextBox_PreviewTextInput"
+                                                                 VerticalAlignment="Center"/>
+                                                        <TextBlock Text=":" VerticalAlignment="Center" 
+                                                                   FontSize="16" FontWeight="Bold" Margin="0,0,5,0"/>
+                                                        <TextBox Text="{Binding Minute, UpdateSourceTrigger=PropertyChanged}"
+                                                                 Width="55" FontSize="14" Padding="8"
+                                                                 BorderBrush="{DynamicResource PrimaryBorder}" BorderThickness="1"
+                                                                 VerticalContentAlignment="Center"
+                                                                 HorizontalContentAlignment="Center"
+                                                                 ToolTip="Минуты (0-59)" MaxLength="2"
+                                                                 PreviewTextInput="NumericTextBox_PreviewTextInput"
+                                                                 VerticalAlignment="Center"/>
+                                                    </StackPanel>
+
+                                                    <!-- Удалить -->
+                                                    <Button Grid.Column="2"
+                                                            Content="✕"
+                                                            Command="{Binding DataContext.RemoveCustomDateCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                            CommandParameter="{Binding}"
+                                                            FontSize="13" Padding="9,7"
+                                                            Background="{DynamicResource ButtonDanger}"
+                                                            Foreground="White" BorderThickness="0"
+                                                            Cursor="Hand" VerticalAlignment="Center">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button">
+                                                                <Setter Property="Template">
+                                                                    <Setter.Value>
+                                                                        <ControlTemplate TargetType="Button">
+                                                                            <Border Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                                                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                            </Border>
+                                                                        </ControlTemplate>
+                                                                    </Setter.Value>
+                                                                </Setter>
+                                                                <Style.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter Property="Background" Value="{DynamicResource ButtonDangerHover}"/>
+                                                                    </Trigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                    </Button>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <!-- Кнопка добавить дату -->
+                                    <Button Command="{Binding AddCustomDateCommand}"
+                                            Margin="0,6,0,0"
+                                            Width="36" Height="36" FontSize="18"
+                                            BorderThickness="0" Cursor="Hand"
+                                            HorizontalAlignment="Left"
+                                            ToolTip="Добавить дату исполнения">
+                                        <TextBlock Text="+" FontWeight="Bold"/>
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Background" Value="{DynamicResource ButtonPrimary}"/>
+                                                <Setter Property="Foreground" Value="White"/>
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border Background="{TemplateBinding Background}" CornerRadius="5">
+                                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            </Border>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="{DynamicResource ButtonPrimaryHover}"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </StackPanel>
                             </StackPanel>
                         </Grid>
                         

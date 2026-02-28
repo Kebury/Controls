@@ -7,8 +7,14 @@
         mc:Ignorable="d"
         Title="{Binding WindowTitle}" 
         Height="750" Width="800"
+        MinHeight="600" MinWidth="680"
         WindowStartupLocation="CenterOwner"
-        Background="{DynamicResource SecondaryBackground}">
+        Background="{DynamicResource SecondaryBackground}"
+        ResizeMode="CanResizeWithGrip"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType">
     
     <Window.Resources>
         <ObjectDataProvider x:Key="ImportancePriorityEnum" 

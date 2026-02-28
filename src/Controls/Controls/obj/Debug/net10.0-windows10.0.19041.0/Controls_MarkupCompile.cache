@@ -12,9 +12,9 @@ TRACE;DEBUG;NET;NET10_0;NETCOREAPP;WINDOWS;WINDOWS10_0_19041_0;NET5_0_OR_GREATER
 C:\Users\Михаил\Desktop\GitHub\controls\Controls\src\Controls\Controls\App.xaml
 23-2110224399
 
-81-1350663975
+78-417431797
 236-793218203
 MainWindow.xaml;Themes\DarkTheme.xaml;Themes\LightTheme.xaml;Views\AddDepartmentWindow.xaml;Views\AddExecutorWindow.xaml;Views\ArchiveView.xaml;Views\CalendarView.xaml;Views\DatabaseLoadingDialog.xaml;Views\DatabaseReconnectingWindow.xaml;Views\DatabaseUnavailableDialog.xaml;Views\DateTasksWindow.xaml;Views\DepartmentTaskDetailWindow.xaml;Views\DepartmentTaskEditWindow.xaml;Views\DepartmentTasksView.xaml;Views\MonthYearPickerWindow.xaml;Views\NotificationsView.xaml;Views\OutgoingReportDialog.xaml;Views\OverdueReportDialog.xaml;Views\SettingsView.xaml;Views\TaskDetailWindow.xaml;Views\TaskEditWindow.xaml;Views\TasksView.xaml;Views\WorkingOrderDialog.xaml;
 
-True
+False
 

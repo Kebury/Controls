@@ -45,6 +45,29 @@ namespace Controls.ViewModels
         /// </summary>
         public bool CanEdit => Task?.Status != "Исполнено";
 
+        /// <summary>
+        /// Видимость блока дат для типа НесколькоРазВГод
+        /// </summary>
+        public bool HasCustomDates => Task?.TaskType == TaskType.НесколькоРазВГод &&
+                                      !string.IsNullOrWhiteSpace(Task?.CustomDatesJson);
+
+        /// <summary>
+        /// Список дат исполнения в году для типа НесколькоРазВГод
+        /// </summary>
+        public System.Collections.Generic.IReadOnlyList<DateTime> CustomDates
+        {
+            get
+            {
+                if (!HasCustomDates) return System.Array.Empty<DateTime>();
+                try
+                {
+                    return JsonSerializer.Deserialize<System.Collections.Generic.List<DateTime>>(Task!.CustomDatesJson)
+                           ?? System.Array.Empty<DateTime>() as System.Collections.Generic.IReadOnlyList<DateTime>;
+                }
+                catch { return System.Array.Empty<DateTime>(); }
+            }
+        }
+
         public ICommand OpenControlDocumentCommand { get; }
         public ICommand OpenReportTemplateCommand { get; }
         public ICommand OpenReportsFolderCommand { get; }

@@ -7,8 +7,14 @@
         mc:Ignorable="d"
         Title="Детали задания" 
         Height="700" Width="900"
+        MinHeight="560" MinWidth="700"
         WindowStartupLocation="CenterOwner"
-        Background="{DynamicResource SecondaryBackground}">
+        Background="{DynamicResource SecondaryBackground}"
+        ResizeMode="CanResizeWithGrip"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType">
     
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
@@ -136,6 +142,25 @@
                             <TextBlock Text="{Binding Task.CreatedDate, StringFormat='dd.MM.yyyy HH:mm'}" 
                                        FontSize="14" 
                                        Foreground="{DynamicResource PrimaryText}"/>
+                        </StackPanel>
+
+                        <!-- Даты исполнения в году (тип НесколькоРазВГод) -->
+                        <StackPanel Margin="0,0,0,12"
+                                    Visibility="{Binding HasCustomDates, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="Даты исполнения в году" 
+                                       FontSize="13" 
+                                       Foreground="{DynamicResource SecondaryText}"
+                                       Margin="0,0,0,5"/>
+                            <ItemsControl ItemsSource="{Binding CustomDates}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding StringFormat='dd.MM.yyyy'}"
+                                                   FontSize="14"
+                                                   Foreground="{DynamicResource PrimaryText}"
+                                                   Margin="0,2,0,2"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
 
                         <StackPanel Margin="0,0,0,12"

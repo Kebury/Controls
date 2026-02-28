@@ -3006,7 +3006,7 @@
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
-    "version": "1.0.1",
+    "version": "0.3.0",
     "restore": {
       "projectUniqueName": "C:\\Users\\Михаил\\Desktop\\GitHub\\controls\\Controls\\src\\Controls\\Controls\\Controls.csproj",
       "projectName": "Controls",

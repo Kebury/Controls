@@ -335,6 +335,11 @@
                               FontSize="13"
                               Height="36"
                               VerticalContentAlignment="Center">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Converter={StaticResource TaskTypeDisplayConverter}}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
                         <ComboBox.ItemContainerStyle>
                             <Style TargetType="ComboBoxItem">
                                 <Setter Property="Padding" Value="10,5"/>

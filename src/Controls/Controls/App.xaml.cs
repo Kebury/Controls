@@ -18,83 +18,66 @@ namespace Controls;
 
 public partial class App : Application
 {
-    private const string MutexName = "Controls.TaskManager.SingleInstance";
+    // ── Версия приложения (читается из метаданных сборки) ────────────────────
+    public static string AppVersion { get; } =
+        "v" + (System.Reflection.Assembly.GetExecutingAssembly().GetName().Version is { } v
+            ? $"{v.Major}.{v.Minor}.{v.Build}"
+            : "?.?.?");
 
-    private static Mutex? _mutex;
-    private static bool _mutexOwned = false;
-
-    [DllImport("user32.dll")]
-    private static extern bool SetForegroundWindow(IntPtr hWnd);
-
-    [DllImport("user32.dll")]
-    private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-
-    [DllImport("user32.dll")]
-    private static extern bool IsIconic(IntPtr hWnd);
-
-    private const int SW_RESTORE = 9;
-
-    /// <summary>
-    /// Находит главное окно уже запущенного экземпляра приложения и выводит его на передний план.
-    /// </summary>
-    private static void BringExistingInstanceToFront()
-    {
-        try
-        {
-            var currentId = Process.GetCurrentProcess().Id;
-            var currentName = Process.GetCurrentProcess().ProcessName;
-
-            foreach (var proc in Process.GetProcessesByName(currentName))
-            {
-                if (proc.Id == currentId)
-                    continue;
-
-                var hWnd = proc.MainWindowHandle;
-                if (hWnd == IntPtr.Zero)
-                    continue;
-
-                if (IsIconic(hWnd))
-                    ShowWindow(hWnd, SW_RESTORE);
-
-                SetForegroundWindow(hWnd);
-                break;
-            }
-        }
-        catch
-        {
-        }
-    }
+    // ── Защита от повторного запуска ─────────────────────────────────────────
+    private const string MutexName       = "Controls.TaskManager.SingleInstance";
+    private const string ShowWindowEvent = "Controls.TaskManager.ShowWindow";
+    private static Mutex? _singleInstanceMutex;
+    private volatile bool _appExiting = false;
 
     protected override void OnStartup(StartupEventArgs e)
     {
-        base.OnStartup(e);
-
-        bool createdNew;
+        // ── 1. Проверка единственного экземпляра ─────────────────────────
+        // Создаём мьютекс БЕЗ немедленного захвата (initiallyOwned:false),
+        // затем пробуем захватить с нулевым ожиданием — это единственный
+        // способ всегда иметь ссылку на объект даже при AbandonedMutexException.
+        _singleInstanceMutex = new Mutex(false, MutexName);
+        bool isNewInstance;
         try
         {
-            _mutex = new Mutex(true, MutexName, out createdNew);
+            isNewInstance = _singleInstanceMutex.WaitOne(0, false);
         }
         catch (AbandonedMutexException)
         {
-            // Предыдущий экземпляр аварийно завершился (например, убит через диспетчер задач).
-            // ОС автоматически передал нам владение мьютексом — продолжаем как единственный экземпляр.
-            createdNew = true;
+            // Предыдущий процесс был убит без ReleaseMutex —
+            // WaitOne всё равно передаёт нам владение, считаем себя единственным экземпляром.
+            isNewInstance = true;
         }
 
-        if (!createdNew)
+        if (!isNewInstance)
         {
-            // Другой экземпляр уже запущен — выводим его на передний план и завершаемся
-            _mutex?.Dispose();
-            _mutex = null;
-            BringExistingInstanceToFront();
-            Shutdown();
+            // Приложение уже запущено — активируем существующее окно и завершаемся
+            try
+            {
+                using var ev = EventWaitHandle.OpenExisting(ShowWindowEvent);
+                ev.Set();
+            }
+            catch
+            {
+                // Событие ещё не создано — игнорируем
+            }
+
+            _singleInstanceMutex?.Close();
+            _singleInstanceMutex = null;
+            // Environment.Exit вместо Shutdown — WPF ещё не инициализирован на этом этапе
+            Environment.Exit(0);
             return;
         }
 
-        _mutexOwned = true;
-        
+        // Запускаем фоновый поток-слушатель для активации окна из других экземпляров
+        StartSingleInstanceListener();
+
+        base.OnStartup(e);
+
+        // Качество рендеринга: ClearType + чёткие субпиксели
         RenderOptions.ProcessRenderMode = System.Windows.Interop.RenderMode.Default;
-        
+
+        // Тема (светлая / тёмная) из сохранённых настроек
         ThemeService.LoadSavedTheme();
         
         try
@@ -580,6 +563,17 @@ public partial class App : Application
         };
         killer.Start();
 
+        // Останавливаем фоновый поток-слушатель одиночного экземпляра
+        _appExiting = true;
+        try
+        {
+            using var ev = EventWaitHandle.OpenExisting(ShowWindowEvent);
+            ev.Set(); // разблокирует WaitOne в потоке-слушателе
+        }
+        catch
+        {
+        }
+
         try
         {
             Services.NetworkDatabaseMonitor.Instance.Stop();
@@ -596,14 +590,68 @@ public partial class App : Application
         {
         }
 
-        if (_mutexOwned)
+        // Освобождаем мьютекс одиночного экземпляра
+        if (_singleInstanceMutex != null)
         {
-            try { _mutex?.ReleaseMutex(); } catch { }
+            try { _singleInstanceMutex.ReleaseMutex(); } catch { }
+            _singleInstanceMutex.Close();
+            _singleInstanceMutex = null;
         }
-        try { _mutex?.Dispose(); } catch { }
 
         base.OnExit(e);
 
         Environment.Exit(0);
+    }
+
+    /// <summary>
+    /// Освобождает мьютекс одиночного экземпляра, позволяя новому экземпляру запуститься.
+    /// Используется при перезапуске приложения (например, после смены базы данных).
+    /// </summary>
+    public static void ReleaseSingleInstanceForRestart()
+    {
+        if (_singleInstanceMutex != null)
+        {
+            try { _singleInstanceMutex.ReleaseMutex(); } catch { }
+            _singleInstanceMutex.Close();
+            _singleInstanceMutex = null;
+        }
+    }
+
+    /// <summary>
+    /// Запускает фоновый поток, ожидающий сигнала от нового экземпляра.
+    /// При получении сигнала выводит главное окно на передний план.
+    /// </summary>
+    private void StartSingleInstanceListener()
+    {
+        var thread = new System.Threading.Thread(() =>
+        {
+            using var ev = new EventWaitHandle(false, EventResetMode.AutoReset, ShowWindowEvent);
+            while (!_appExiting)
+            {
+                // Ждём сигнала не дольше 500 мс, чтобы отреагировать на _appExiting
+                if (ev.WaitOne(TimeSpan.FromMilliseconds(500)))
+                {
+                    if (_appExiting) break;
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        var win = MainWindow;
+                        if (win != null)
+                        {
+                            if (win.WindowState == WindowState.Minimized)
+                                win.WindowState = WindowState.Normal;
+                            win.Show();
+                            win.Activate();
+                            win.Focus();
+                        }
+                    });
+                }
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "SingleInstanceListener"
+        };
+        thread.Start();
     }
 }

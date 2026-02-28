@@ -3,8 +3,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Исполнение в рабочем порядке"
         Height="220" Width="450"
+        MinHeight="200" MinWidth="380"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
+        ResizeMode="CanResizeWithGrip"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
         Background="{DynamicResource PrimaryBackground}">
     <Grid Margin="20">
         <Grid.RowDefinitions>
