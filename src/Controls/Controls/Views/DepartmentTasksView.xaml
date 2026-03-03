@@ -14,6 +14,7 @@
     <UserControl.Resources>
         <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
         <helpers:DepartmentNamesConverter x:Key="DepartmentNamesConverter"/>
+        <helpers:IsNotNullOrEmptyConverter x:Key="IsNotNullOrEmptyConverter"/>
     </UserControl.Resources>
     
     <Grid x:Name="MainGrid" 
@@ -350,8 +351,8 @@
                                 <TextBlock Text="{Binding TaskNumber}"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource ButtonPrimary}"
-                                           TextWrapping="NoWrap"
-                                           TextTrimming="CharacterEllipsis"
+                                           TextWrapping="Wrap"
+                                           ToolTip="{Binding TaskNumber}"
                                            Cursor="Hand"
                                            VerticalAlignment="Center"
                                            Margin="10,0">
@@ -429,9 +430,12 @@
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
 
-                    <DataGridTemplateColumn Header="Исполнено" Width="150">
+                    <DataGridTemplateColumn Header="Исполнено" Width="170">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
+                                <ScrollViewer MaxHeight="120"
+                                              VerticalScrollBarVisibility="Auto"
+                                              HorizontalScrollBarVisibility="Disabled">
                                 <StackPanel Orientation="Vertical" 
                                             VerticalAlignment="Center"
                                             Margin="5">
@@ -468,13 +472,36 @@
                                                                FontSize="11"
                                                                Foreground="{DynamicResource SecondaryText}"
                                                                VerticalAlignment="Center"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               ToolTip="{Binding Department.FullName}"/>
+                                                               TextTrimming="CharacterEllipsis">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="ToolTip" Value="{Binding Department.FullName}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding OutgoingDocumentNumber, Converter={StaticResource IsNotNullOrEmptyConverter}}" Value="True">
+                                                                        <Setter Property="ToolTip">
+                                                                            <Setter.Value>
+                                                                                <ToolTip>
+                                                                                    <StackPanel>
+                                                                                        <TextBlock Text="{Binding Department.FullName}" FontWeight="SemiBold"/>
+                                                                                        <TextBlock Margin="0,4,0,0">
+                                                                                            <Run Text="Исх. №: " FontWeight="SemiBold"/>
+                                                                                            <Run Text="{Binding OutgoingDocumentNumber}"/>
+                                                                                        </TextBlock>
+                                                                                    </StackPanel>
+                                                                                </ToolTip>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
                                                 </Grid>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
                                 </StackPanel>
+                                </ScrollViewer>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
@@ -484,19 +511,20 @@
                     <Style TargetType="DataGridRow">
                         <Setter Property="MinHeight" Value="50"/>
                         <Setter Property="Background" Value="{DynamicResource DataGridBackground}"/>
+                        <Setter Property="Tag" Value="{Binding DataContext, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
                         <Setter Property="ContextMenu">
                             <Setter.Value>
                                 <ContextMenu>
                                     <MenuItem Header="📝 Редактировать" 
-                                              Command="{Binding DataContext.EditTaskCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                              CommandParameter="{Binding}"/>
+                                              Command="{Binding PlacementTarget.Tag.EditTaskCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                     <MenuItem Header="🗑️ Удалить" 
-                                              Command="{Binding DataContext.DeleteTaskCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                              CommandParameter="{Binding}"/>
+                                              Command="{Binding PlacementTarget.Tag.DeleteTaskCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                     <Separator/>
                                     <MenuItem Header="👁️ Детали" 
-                                              Command="{Binding DataContext.ViewTaskDetailsCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                              CommandParameter="{Binding}"/>
+                                              Command="{Binding PlacementTarget.Tag.ViewTaskDetailsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                 </ContextMenu>
                             </Setter.Value>
                         </Setter>

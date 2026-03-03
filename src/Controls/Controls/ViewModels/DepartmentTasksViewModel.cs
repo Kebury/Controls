@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.ComponentModel;
@@ -145,23 +147,46 @@ namespace Controls.ViewModels
         public int CompletedTasksCount => Tasks.Count(t => t.IsCompleted);
         public int ActiveTasksCount => Tasks.Count(t => !t.IsCompleted);
 
-        private void LoadTasks()
+        // Обёртка для обратной совместимости с вызывающим кодом
+        private void LoadTasks() => _ = LoadTasksAsync();
+
+        /// <summary>
+        /// Загружает задания асинхронно — DB-запросы выполняются в фоне,
+        /// UI не блокируется даже при медленном сетевом SQLite-файле.
+        /// </summary>
+        private async System.Threading.Tasks.Task LoadTasksAsync()
         {
             try
             {
-                _dbContext.ChangeTracker.Clear();
-                
+                // Сохраняем фильтр до перехода в фоновый поток
                 var savedDepartment = SelectedDepartment;
-                
+
+                // DbContext не потокобезопасен — сбрасываем кэш до Task.Run (UI-поток)
+                _dbContext.ChangeTracker.Clear();
+
+                // ── Фоновый поток: создаём отдельный контекст, не трогаем _dbContext ─
+                var (allTasks, allDepartments) = await System.Threading.Tasks.Task.Run(() =>
+                {
+                    using var freshCtx = new Data.ControlsDbContext();
+
+                    var tasks = freshCtx.DepartmentTasks
+                        .Include(t => t.Executor)
+                        .Include(t => t.TaskDepartments)
+                            .ThenInclude(td => td.Department)
+                        .ToList();
+
+                    var depts = freshCtx.Departments
+                        .OrderBy(d => d.ShortName)
+                        .Select(d => d.ShortName)
+                        .ToList();
+
+                    return (tasks, depts);
+                });
+
+                // ── UI-поток: обновляем коллекции (await вернул управление сюда) ─
                 Tasks.Clear();
                 Departments.Clear();
                 Departments.Add("Все организации");
-
-                var allTasks = _dbContext.DepartmentTasks
-                    .Include(t => t.Executor)
-                    .Include(t => t.TaskDepartments)
-                        .ThenInclude(td => td.Department)
-                    .ToList();
 
                 var incompleteTasks = allTasks
                     .Where(t => !t.IsCompleted)
@@ -171,48 +196,34 @@ namespace Controls.ViewModels
                 var today = DateTime.Today;
                 var filteredTasks = _currentView switch
                 {
-                    "today" => incompleteTasks.Where(t => t.DueDate.Date == today).ToList(),
+                    "today"   => incompleteTasks.Where(t => t.DueDate.Date == today).ToList(),
                     "overdue" => incompleteTasks.Where(t => t.IsOverdue).ToList(),
-                    "all" => incompleteTasks,
-                    _ => incompleteTasks
+                    "all"     => incompleteTasks,
+                    _         => incompleteTasks
                 };
 
                 foreach (var task in filteredTasks)
-                {
                     Tasks.Add(task);
-                }
 
-                var allDepartments = _dbContext.Departments
-                    .OrderBy(d => d.ShortName)
-                    .Select(d => d.ShortName)
-                    .ToList();
-                
                 foreach (var dept in allDepartments)
-                {
                     if (!Departments.Contains(dept))
-                    {
                         Departments.Add(dept);
-                    }
-                }
 
                 if (!string.IsNullOrEmpty(savedDepartment) && Departments.Contains(savedDepartment))
-                {
                     _selectedDepartment = savedDepartment;
-                }
                 else
-                {
                     _selectedDepartment = "Все организации";
-                }
+
                 OnPropertyChanged(nameof(SelectedDepartment));
 
                 _tasksView = CollectionViewSource.GetDefaultView(Tasks);
                 if (_tasksView != null)
-                {
                     _tasksView.Filter = null;
-                }
+
                 FilterTasks();
 
-                UpdateCounters();
+                // Передаём уже загруженный список — лишний запрос к БД не нужен
+                UpdateCounters(allTasks);
             }
             catch (Exception ex)
             {
@@ -431,14 +442,14 @@ namespace Controls.ViewModels
             }
         }
 
-        private void UpdateCounters()
+        private void UpdateCounters(List<DepartmentTask>? allTasksFromDb = null)
         {
-            var allTasks = _dbContext.DepartmentTasks.ToList();
+            var allTasks = allTasksFromDb ?? _dbContext.DepartmentTasks.ToList();
             var today = DateTime.Today;
             
-            TotalTasksCount = allTasks.Count(t => !t.IsCompleted);
+            TotalTasksCount   = allTasks.Count(t => !t.IsCompleted);
             OverdueTasksCount = allTasks.Count(t => !t.IsCompleted && t.IsOverdue);
-            TodayTasksCount = allTasks.Count(t => !t.IsCompleted && t.DueDate.Date == today);
+            TodayTasksCount   = allTasks.Count(t => !t.IsCompleted && t.DueDate.Date == today);
             
             OnPropertyChanged(nameof(CompletedTasksCount));
             OnPropertyChanged(nameof(ActiveTasksCount));
@@ -484,41 +495,34 @@ namespace Controls.ViewModels
                         editWindow.DialogResult = saved;
                     };
 
+                    // Предустанавливаем «Исполнено» для конкретного отдела,
+                    // чтобы пользователю не приходилось нажимать чекбокс повторно
+                    var targetSelection = viewModel.DepartmentSelections
+                        .FirstOrDefault(s => s.Department.Id == departmentLink.DepartmentId);
+                    if (targetSelection != null)
+                        targetSelection.IsCompleted = true;
+
                     if (editWindow.ShowDialog() == true)
                     {
-                        var freshDepartmentLink = _dbContext.DepartmentTaskDepartments
-                            .FirstOrDefault(td => td.Id == departmentLink.Id);
-                        
-                        if (freshDepartmentLink != null)
-                        {
-                            freshDepartmentLink.IsCompleted = true;
-                            freshDepartmentLink.CompletedDate = DateTime.Now;
-                            
-                            _dbContext.SaveChanges();
-
-                            var taskDepartments = _dbContext.DepartmentTaskDepartments
-                                .Where(td => td.DepartmentTaskId == freshDepartmentLink.DepartmentTaskId)
-                                .ToList();
-
-                            if (taskDepartments.All(td => td.IsCompleted))
-                            {
-                                MessageBox.Show(
-                                    "Все организации исполнили задание. Задание перемещено в архив.",
-                                    "Информация",
-                                    MessageBoxButton.OK,
-                                    MessageBoxImage.Information);
-                            }
-
-                            LoadTasks();
-                        }
+                        // DepartmentTaskEditViewModel.Save() уже сохранил IsCompleted = true
+                        // (мы предустановили targetSelection.IsCompleted выше), а также
+                        // пересоздал все DepartmentTaskDepartments с новыми Id — искать
+                        // запись по старому departmentLink.Id бессмысленно.
+                        // Просто сбрасываем трекер и обновляем список.
+                        _dbContext.ChangeTracker.Clear();
+                        LoadTasks();
                     }
                 }
             }
             else
             {
+                // Отмечаем как исполненное без загрузки документов
                 departmentLink.IsCompleted = true;
                 departmentLink.CompletedDate = DateTime.Now;
-                
+
+                // Контекст работает в NoTracking-режиме, поэтому явно помечаем
+                // сущность как изменённую, иначе SaveChanges() ничего не сохранит.
+                _dbContext.DepartmentTaskDepartments.Update(departmentLink);
                 _dbContext.SaveChanges();
 
                 var taskDepartments = _dbContext.DepartmentTaskDepartments

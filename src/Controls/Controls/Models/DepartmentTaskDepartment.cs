@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -63,5 +64,42 @@ namespace Controls.Models
         /// </summary>
         [ForeignKey(nameof(ExecutorId))]
         public Executor? Executor { get; set; }
+
+        // ── Документы по отделу ──────────────────────────────────────
+
+        /// <summary>
+        /// Номер направленного документа в данную организацию
+        /// (например: исх. № 123/2026)
+        /// </summary>
+        [MaxLength(200)]
+        public string OutgoingDocumentNumber { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Пути к направленным (исходящим) файлам для данной организации
+        /// (разделённые точкой с запятой)
+        /// </summary>
+        [MaxLength(4000)]
+        public string OutgoingFilePaths { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Пути к поступившим (входящим) файлам от данной организации
+        /// (разделённые точкой с запятой)
+        /// </summary>
+        [MaxLength(4000)]
+        public string IncomingFilePaths { get; set; } = string.Empty;
+
+        // ── Вспомогательные методы ────────────────────────────────────
+
+        /// <summary>Список направленных файлов.</summary>
+        public List<string> GetOutgoingFiles() =>
+            string.IsNullOrWhiteSpace(OutgoingFilePaths)
+                ? new List<string>()
+                : new List<string>(OutgoingFilePaths.Split(';', StringSplitOptions.RemoveEmptyEntries));
+
+        /// <summary>Список поступивших файлов.</summary>
+        public List<string> GetIncomingFiles() =>
+            string.IsNullOrWhiteSpace(IncomingFilePaths)
+                ? new List<string>()
+                : new List<string>(IncomingFilePaths.Split(';', StringSplitOptions.RemoveEmptyEntries));
     }
 }

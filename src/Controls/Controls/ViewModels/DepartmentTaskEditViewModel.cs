@@ -70,6 +70,9 @@ namespace Controls.ViewModels
                         item.IsSelected = true;
                         item.IsCompleted = td.IsCompleted;
                         item.DepartmentTaskDepartmentId = td.Id;
+                        item.OutgoingDocumentNumber = td.OutgoingDocumentNumber ?? string.Empty;
+                        foreach (var f in td.GetOutgoingFiles()) item.OutgoingFiles.Add(f);
+                        foreach (var f in td.GetIncomingFiles()) item.IncomingFiles.Add(f);
                     }
                 }
 
@@ -286,7 +289,10 @@ namespace Controls.ViewModels
                         DepartmentTaskId = task.Id,
                         DepartmentId = selection.Department.Id,
                         IsCompleted = selection.IsCompleted,
-                        CompletedDate = selection.IsCompleted ? DateTime.Now : null
+                        CompletedDate = selection.IsCompleted ? DateTime.Now : null,
+                        OutgoingDocumentNumber = selection.OutgoingDocumentNumber,
+                        OutgoingFilePaths = string.Join(";", selection.OutgoingFiles),
+                        IncomingFilePaths = string.Join(";", selection.IncomingFiles)
                     };
                     _dbContext.DepartmentTaskDepartments.Add(link);
                 }

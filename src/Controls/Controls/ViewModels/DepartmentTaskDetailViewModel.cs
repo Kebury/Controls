@@ -33,17 +33,26 @@ namespace Controls.ViewModels
             {
                 foreach (var taskDept in _task.TaskDepartments)
                 {
-                    DepartmentStatuses.Add(new DepartmentStatusInfo
+                    var info = new DepartmentStatusInfo
                     {
-                        DepartmentName = taskDept.Department?.ShortName ?? "Неизвестный отдел",
-                        DepartmentFullName = taskDept.Department?.FullName ?? "Неизвестный отдел",
+                        DepartmentName = taskDept.Department?.ShortName ?? "Неизвестная организация",
+                        DepartmentFullName = taskDept.Department?.FullName ?? "Неизвестная организация",
                         IsCompleted = taskDept.IsCompleted,
                         CompletedDate = taskDept.CompletedDate,
                         StatusText = taskDept.IsCompleted 
                             ? $"Исполнено {(taskDept.CompletedDate.HasValue ? taskDept.CompletedDate.Value.ToString("dd.MM.yyyy HH:mm") : "")}" 
                             : "Не исполнено",
-                        StatusColor = taskDept.IsCompleted ? "#4CAF50" : "#F44336"
-                    });
+                        StatusColor = taskDept.IsCompleted ? "#4CAF50" : "#F44336",
+                        OutgoingDocumentNumber = taskDept.OutgoingDocumentNumber,
+                    };
+                    foreach (var f in taskDept.GetOutgoingFiles())
+                        info.OutgoingFiles.Add(f);
+                    foreach (var f in taskDept.GetIncomingFiles())
+                        info.IncomingFiles.Add(f);
+
+                    info.OpenFileCommand = new RelayCommand(file => OpenFile(file as string));
+
+                    DepartmentStatuses.Add(info);
                 }
             }
 
@@ -182,7 +191,7 @@ namespace Controls.ViewModels
     }
 
     /// <summary>
-    /// Информация о статусе исполнения задания отделом
+    /// Информация о статусе исполнения задания организацией
     /// </summary>
     public class DepartmentStatusInfo
     {
@@ -192,5 +201,19 @@ namespace Controls.ViewModels
         public DateTime? CompletedDate { get; set; }
         public string StatusText { get; set; } = string.Empty;
         public string StatusColor { get; set; } = string.Empty;
+
+        /// <summary>Номер направленного документа в данную организацию.</summary>
+        public string OutgoingDocumentNumber { get; set; } = string.Empty;
+        /// <summary>Направленные (исходящие) файлы.</summary>
+        public ObservableCollection<string> OutgoingFiles { get; } = new();
+        /// <summary>Поступившие (входящие) файлы.</summary>
+        public ObservableCollection<string> IncomingFiles { get; } = new();
+        /// <summary>Команда открытия файла.</summary>
+        public ICommand? OpenFileCommand { get; set; }
+
+        public bool HasOutgoingDocNumber => !string.IsNullOrWhiteSpace(OutgoingDocumentNumber);
+        public bool HasOutgoingFiles => OutgoingFiles.Count > 0;
+        public bool HasIncomingFiles => IncomingFiles.Count > 0;
+        public bool HasAnyDocuments => HasOutgoingDocNumber || HasOutgoingFiles || HasIncomingFiles;
     }
 }

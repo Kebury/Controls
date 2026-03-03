@@ -90,7 +90,7 @@
                             <Border BorderBrush="{DynamicResource PrimaryBorder}"
                                     BorderThickness="1"
                                     CornerRadius="5"
-                                    MaxHeight="200">
+                                    MaxHeight="400">
                                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                                     <ItemsControl ItemsSource="{Binding DepartmentSelections}">
                                         <ItemsControl.ItemTemplate>
@@ -98,46 +98,363 @@
                                                 <Border Padding="10,5" 
                                                         Background="{DynamicResource SecondaryBackground}"
                                                         Margin="5">
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        
-                                                        <CheckBox Grid.Column="0"
-                                                                  IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                                                                  IsEnabled="{Binding DataContext.CanEditFields, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                  VerticalAlignment="Center"
-                                                                  Margin="0,0,10,0"
-                                                                  Cursor="Hand"/>
-                                                        
-                                                        <TextBlock Grid.Column="1"
-                                                                   Text="{Binding Department.ShortName}"
-                                                                   VerticalAlignment="Center"
-                                                                   FontSize="13"
-                                                                   Foreground="{DynamicResource PrimaryText}"
-                                                                   ToolTip="{Binding Department.FullName}"/>
-                                                        
-                                                        <CheckBox Grid.Column="2"
-                                                                  IsChecked="{Binding IsCompleted, Mode=TwoWay}"
-                                                                  Content="Исполнено"
-                                                                  VerticalAlignment="Center"
-                                                                  FontSize="12"
-                                                                  Foreground="{DynamicResource SecondaryText}"
-                                                                  Cursor="Hand">
-                                                            <CheckBox.Style>
-                                                                <Style TargetType="CheckBox">
-                                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsSelected}" Value="False">
+                                                    <StackPanel>
+
+                                                        <!-- ─── Строка организации ─────────────────────────── -->
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="160" MinWidth="120"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+
+                                                            <!-- Чекбокс выбора организации -->
+                                                            <CheckBox Grid.Column="0"
+                                                                      IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                                      IsEnabled="{Binding DataContext.CanEditFields, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                      VerticalAlignment="Center"
+                                                                      Margin="0,0,10,0"
+                                                                      Cursor="Hand"/>
+
+                                                            <!-- Название организации -->
+                                                            <TextBlock Grid.Column="1"
+                                                                       Text="{Binding Department.ShortName}"
+                                                                       VerticalAlignment="Center"
+                                                                       FontSize="13"
+                                                                       Foreground="{DynamicResource PrimaryText}"
+                                                                       ToolTip="{Binding Department.FullName}"
+                                                                       TextTrimming="CharacterEllipsis"/>
+
+                                                            <!-- Номер исходящего документа (inline, только когда выбрано) -->
+                                                            <TextBox Grid.Column="2"
+                                                                     Text="{Binding OutgoingDocumentNumber, UpdateSourceTrigger=PropertyChanged}"
+                                                                     IsEnabled="{Binding DataContext.CanEditFields, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                     FontSize="12"
+                                                                     Padding="6,4"
+                                                                     Margin="8,0"
+                                                                     VerticalContentAlignment="Center"
+                                                                     BorderBrush="{DynamicResource PrimaryBorder}"
+                                                                     BorderThickness="1"
+                                                                     ToolTip="Номер исходящего документа, например: исх. № 123/2026">
+                                                                <TextBox.Style>
+                                                                    <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                        <Setter Property="Foreground" Value="{DynamicResource PrimaryText}"/>
+                                                                        <Setter Property="Background" Value="{DynamicResource PrimaryBackground}"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBox.Style>
+                                                            </TextBox>
+
+                                                            <!-- Чекбокс "Исполнено" -->
+                                                            <CheckBox Grid.Column="3"
+                                                                      IsChecked="{Binding IsCompleted, Mode=TwoWay}"
+                                                                      Content="Исполнено"
+                                                                      VerticalAlignment="Center"
+                                                                      FontSize="12"
+                                                                      Margin="0,0,8,0"
+                                                                      Foreground="{DynamicResource SecondaryText}"
+                                                                      Cursor="Hand">
+                                                                <CheckBox.Style>
+                                                                    <Style TargetType="CheckBox">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </CheckBox.Style>
+                                                            </CheckBox>
+
+                                                            <!-- Кнопка "📎 Файлы" — разворачивает секцию файлов -->
+                                                            <Button Grid.Column="4"
+                                                                    Command="{Binding ToggleDetailsCommand}"
+                                                                    FontSize="11"
+                                                                    Padding="6,3"
+                                                                    BorderThickness="1"
+                                                                    BorderBrush="{DynamicResource PrimaryBorder}"
+                                                                    Cursor="Hand"
+                                                                    ToolTip="Прикрепить/просмотреть файлы организации">
+                                                                <Button.Style>
+                                                                    <Style TargetType="Button">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                        <Setter Property="Background" Value="{DynamicResource SecondaryBackground}"/>
+                                                                        <Setter Property="Foreground" Value="{DynamicResource SecondaryText}"/>
+                                                                        <Setter Property="Template">
+                                                                            <Setter.Value>
+                                                                                <ControlTemplate TargetType="Button">
+                                                                                    <Border Background="{TemplateBinding Background}"
+                                                                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                                                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                                                                            CornerRadius="3"
+                                                                                            Padding="{TemplateBinding Padding}">
+                                                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                                    </Border>
+                                                                                </ControlTemplate>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding IsDetailsExpanded}" Value="True">
+                                                                                <Setter Property="Background" Value="{DynamicResource ButtonPrimary}"/>
+                                                                                <Setter Property="Foreground" Value="White"/>
+                                                                            </DataTrigger>
+                                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                                <Setter Property="Background" Value="{DynamicResource PrimaryBorder}"/>
+                                                                            </Trigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Button.Style>
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <TextBlock Text="📎" Margin="0,0,4,0"/>
+                                                                    <TextBlock Text="Файлы"/>
+                                                                </StackPanel>
+                                                            </Button>
+                                                        </Grid>
+
+                                                        <!-- ─── Разворачиваемая секция файлов ─────── -->
+                                                        <Border Margin="25,8,0,4"
+                                                                Background="{DynamicResource PrimaryBackground}"
+                                                                BorderBrush="{DynamicResource PrimaryBorder}"
+                                                                BorderThickness="1"
+                                                                CornerRadius="6"
+                                                                Padding="12"
+                                                                Visibility="{Binding IsDetailsExpanded, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                            <StackPanel>
+                                                                <Grid Margin="0,0,0,6">
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="*"/>
+                                                                        <ColumnDefinition Width="Auto"/>
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <TextBlock Grid.Column="0"
+                                                                               Text="📤 Направленные документы"
+                                                                               FontSize="12"
+                                                                               FontWeight="SemiBold"
+                                                                               Foreground="{DynamicResource PrimaryText}"
+                                                                               VerticalAlignment="Center"/>
+                                                                    <Button Grid.Column="1"
+                                                                            Content="➕ Добавить"
+                                                                            Command="{Binding AddOutgoingFileCommand}"
+                                                                            IsEnabled="{Binding DataContext.CanEditFields, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                            FontSize="11"
+                                                                            Padding="8,3"
+                                                                            BorderThickness="0"
+                                                                            Cursor="Hand">
+                                                                        <Button.Style>
+                                                                            <Style TargetType="Button">
+                                                                                <Setter Property="Background" Value="{DynamicResource ButtonPrimary}"/>
+                                                                                <Setter Property="Foreground" Value="White"/>
+                                                                                <Setter Property="Template">
+                                                                                    <Setter.Value>
+                                                                                        <ControlTemplate TargetType="Button">
+                                                                                            <Border Background="{TemplateBinding Background}" CornerRadius="3" Padding="{TemplateBinding Padding}">
+                                                                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                                            </Border>
+                                                                                        </ControlTemplate>
+                                                                                    </Setter.Value>
+                                                                                </Setter>
+                                                                                <Style.Triggers>
+                                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                                        <Setter Property="Background" Value="{DynamicResource ButtonPrimaryHover}"/>
+                                                                                    </Trigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </Button.Style>
+                                                                    </Button>
+                                                                </Grid>
+                                                                <ItemsControl ItemsSource="{Binding OutgoingFiles}" Margin="0,0,0,8">
+                                                                    <ItemsControl.ItemTemplate>
+                                                                        <DataTemplate>
+                                                                            <Grid Margin="0,0,0,4">
+                                                                                <Grid.ColumnDefinitions>
+                                                                                    <ColumnDefinition Width="Auto"/>
+                                                                                    <ColumnDefinition Width="*"/>
+                                                                                    <ColumnDefinition Width="Auto"/>
+                                                                                    <ColumnDefinition Width="Auto"/>
+                                                                                </Grid.ColumnDefinitions>
+                                                                                <TextBlock Grid.Column="0" Text="📝" FontSize="13" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                                                <TextBlock Grid.Column="1" Text="{Binding}" FontSize="12"
+                                                                                           Foreground="{DynamicResource PrimaryText}"
+                                                                                           VerticalAlignment="Center"
+                                                                                           TextTrimming="CharacterEllipsis"
+                                                                                           ToolTip="{Binding}"/>
+                                                                                <Button Grid.Column="2" Content="🔗" FontSize="12" Padding="4,2"
+                                                                                        BorderThickness="0" Background="Transparent" Cursor="Hand"
+                                                                                        ToolTip="Открыть файл"
+                                                                                        Tag="{Binding}"
+                                                                                        Click="OpenFile_Click"/>
+                                                                                <Button Grid.Column="3"
+                                                                                        Content="🗑️"
+                                                                                        Command="{Binding DataContext.RemoveOutgoingFileCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                                        CommandParameter="{Binding}"
+                                                                                        FontSize="12" Padding="4,2"
+                                                                                        BorderThickness="0" Cursor="Hand"
+                                                                                        ToolTip="Удалить">
+                                                                                    <Button.Style>
+                                                                                        <Style TargetType="Button">
+                                                                                            <Setter Property="Background" Value="{DynamicResource ButtonDanger}"/>
+                                                                                            <Setter Property="Foreground" Value="White"/>
+                                                                                            <Setter Property="Template">
+                                                                                                <Setter.Value>
+                                                                                                    <ControlTemplate TargetType="Button">
+                                                                                                        <Border Background="{TemplateBinding Background}" CornerRadius="3" Padding="{TemplateBinding Padding}">
+                                                                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                                                        </Border>
+                                                                                                    </ControlTemplate>
+                                                                                                </Setter.Value>
+                                                                                            </Setter>
+                                                                                            <Style.Triggers>
+                                                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                                                    <Setter Property="Background" Value="{DynamicResource ButtonDangerHover}"/>
+                                                                                                </Trigger>
+                                                                                            </Style.Triggers>
+                                                                                        </Style>
+                                                                                    </Button.Style>
+                                                                                </Button>
+                                                                            </Grid>
+                                                                        </DataTemplate>
+                                                                    </ItemsControl.ItemTemplate>
+                                                                </ItemsControl>
+                                                                <TextBlock Text="Файлы не прикреплены"
+                                                                           FontSize="11" FontStyle="Italic"
+                                                                           Foreground="{DynamicResource TertiaryText}"
+                                                                           Margin="0,0,0,8">
+                                                                    <TextBlock.Style>
+                                                                        <Style TargetType="TextBlock">
                                                                             <Setter Property="Visibility" Value="Collapsed"/>
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </CheckBox.Style>
-                                                        </CheckBox>
-                                                    </Grid>
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding OutgoingFiles.Count}" Value="0">
+                                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </TextBlock.Style>
+                                                                </TextBlock>
+
+                                                                <!-- Поступившие (входящие) файлы -->
+                                                                <Grid Margin="0,0,0,6">
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="*"/>
+                                                                        <ColumnDefinition Width="Auto"/>
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <TextBlock Grid.Column="0"
+                                                                               Text="📥 Ответные документы"
+                                                                               FontSize="12"
+                                                                               FontWeight="SemiBold"
+                                                                               Foreground="{DynamicResource PrimaryText}"
+                                                                               VerticalAlignment="Center"/>
+                                                                    <Button Grid.Column="1"
+                                                                            Content="➕ Добавить"
+                                                                            Command="{Binding AddIncomingFileCommand}"
+                                                                            IsEnabled="{Binding DataContext.CanEditFields, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                            FontSize="11"
+                                                                            Padding="8,3"
+                                                                            BorderThickness="0"
+                                                                            Cursor="Hand">
+                                                                        <Button.Style>
+                                                                            <Style TargetType="Button">
+                                                                                <Setter Property="Background" Value="{DynamicResource ButtonSecondary}"/>
+                                                                                <Setter Property="Foreground" Value="White"/>
+                                                                                <Setter Property="Template">
+                                                                                    <Setter.Value>
+                                                                                        <ControlTemplate TargetType="Button">
+                                                                                            <Border Background="{TemplateBinding Background}" CornerRadius="3" Padding="{TemplateBinding Padding}">
+                                                                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                                            </Border>
+                                                                                        </ControlTemplate>
+                                                                                    </Setter.Value>
+                                                                                </Setter>
+                                                                                <Style.Triggers>
+                                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                                        <Setter Property="Background" Value="{DynamicResource ButtonSecondaryHover}"/>
+                                                                                    </Trigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </Button.Style>
+                                                                    </Button>
+                                                                </Grid>
+                                                                <ItemsControl ItemsSource="{Binding IncomingFiles}">
+                                                                    <ItemsControl.ItemTemplate>
+                                                                        <DataTemplate>
+                                                                            <Grid Margin="0,0,0,4">
+                                                                                <Grid.ColumnDefinitions>
+                                                                                    <ColumnDefinition Width="Auto"/>
+                                                                                    <ColumnDefinition Width="*"/>
+                                                                                    <ColumnDefinition Width="Auto"/>
+                                                                                    <ColumnDefinition Width="Auto"/>
+                                                                                </Grid.ColumnDefinitions>
+                                                                                <TextBlock Grid.Column="0" Text="📨" FontSize="13" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                                                <TextBlock Grid.Column="1" Text="{Binding}" FontSize="12"
+                                                                                           Foreground="{DynamicResource PrimaryText}"
+                                                                                           VerticalAlignment="Center"
+                                                                                           TextTrimming="CharacterEllipsis"
+                                                                                           ToolTip="{Binding}"/>
+                                                                                <Button Grid.Column="2" Content="🔗" FontSize="12" Padding="4,2"
+                                                                                        BorderThickness="0" Background="Transparent" Cursor="Hand"
+                                                                                        ToolTip="Открыть файл"
+                                                                                        Tag="{Binding}"
+                                                                                        Click="OpenFile_Click"/>
+                                                                                <Button Grid.Column="3"
+                                                                                        Content="🗑️"
+                                                                                        Command="{Binding DataContext.RemoveIncomingFileCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                                        CommandParameter="{Binding}"
+                                                                                        FontSize="12" Padding="4,2"
+                                                                                        BorderThickness="0" Cursor="Hand"
+                                                                                        ToolTip="Удалить">
+                                                                                    <Button.Style>
+                                                                                        <Style TargetType="Button">
+                                                                                            <Setter Property="Background" Value="{DynamicResource ButtonDanger}"/>
+                                                                                            <Setter Property="Foreground" Value="White"/>
+                                                                                            <Setter Property="Template">
+                                                                                                <Setter.Value>
+                                                                                                    <ControlTemplate TargetType="Button">
+                                                                                                        <Border Background="{TemplateBinding Background}" CornerRadius="3" Padding="{TemplateBinding Padding}">
+                                                                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                                                        </Border>
+                                                                                                    </ControlTemplate>
+                                                                                                </Setter.Value>
+                                                                                            </Setter>
+                                                                                            <Style.Triggers>
+                                                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                                                    <Setter Property="Background" Value="{DynamicResource ButtonDangerHover}"/>
+                                                                                                </Trigger>
+                                                                                            </Style.Triggers>
+                                                                                        </Style>
+                                                                                    </Button.Style>
+                                                                                </Button>
+                                                                            </Grid>
+                                                                        </DataTemplate>
+                                                                    </ItemsControl.ItemTemplate>
+                                                                </ItemsControl>
+                                                                <TextBlock Text="Файлы не прикреплены"
+                                                                           FontSize="11" FontStyle="Italic"
+                                                                           Foreground="{DynamicResource TertiaryText}">
+                                                                    <TextBlock.Style>
+                                                                        <Style TargetType="TextBlock">
+                                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IncomingFiles.Count}" Value="0">
+                                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </TextBlock.Style>
+                                                                </TextBlock>
+
+                                                            </StackPanel>
+                                                        </Border>
+                                                        <!-- ─── Конец секции документов ───────────────── -->
+
+                                                    </StackPanel>
                                                 </Border>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>

@@ -169,7 +169,10 @@ public partial class App : Application
                 }
                 else
                 {
-                    context.Database.Migrate();
+                    // Миграций нет — ничего не делаем.
+                    // Вызов Migrate() без ожидающих миграций захватывает write-lock
+                    // SQLite, что вызывает ошибку при запуске на второй машине,
+                    // пока первая держит соединение.
                 }
             }
         }

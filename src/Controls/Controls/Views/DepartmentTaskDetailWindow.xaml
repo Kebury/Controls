@@ -219,9 +219,19 @@
                                    Foreground="{DynamicResource SecondaryText}"
                                    Margin="0,0,15,12"/>
                         <StackPanel Grid.Row="7" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,12">
-                            <TextBlock Text="{Binding IsCompleted, StringFormat='{}{0:Да;Нет;Нет}'}"
-                                       FontSize="14"
-                                       Foreground="{DynamicResource PrimaryText}"/>
+                            <TextBlock FontSize="14"
+                                       Foreground="{DynamicResource PrimaryText}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="Нет"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsCompleted}" Value="True">
+                                                <Setter Property="Text" Value="Да"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                             <TextBlock Text="{Binding CompletedDate, StringFormat=' (дата: {0:dd.MM.yyyy})'}"
                                        FontSize="14"
                                        Foreground="{DynamicResource SecondaryText}"
@@ -242,6 +252,7 @@
                                    TextWrapping="Wrap"/>
                     </Grid>
                 </Border>
+                            <!-- Статус выполнения по организациям -->
                             <Border Background="{DynamicResource PrimaryBackground}"
                                     BorderBrush="{DynamicResource PrimaryBorder}"
                                     BorderThickness="1"
@@ -265,37 +276,168 @@
                                                         CornerRadius="5"
                                                         Padding="15,10"
                                                         Margin="0,0,0,10">
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        
-                                                        <StackPanel Grid.Column="0">
-                                                            <TextBlock Text="{Binding DepartmentName}"
-                                                                       FontSize="14"
-                                                                       FontWeight="SemiBold"
-                                                                       Foreground="{DynamicResource PrimaryText}"
-                                                                       Margin="0,0,0,5"/>
-                                                            <TextBlock Text="{Binding DepartmentFullName}"
-                                                                       FontSize="12"
-                                                                       Foreground="{DynamicResource SecondaryText}"
-                                                                       TextWrapping="Wrap"/>
-                                                        </StackPanel>
-                                                        
-                                                        <Border Grid.Column="1"
-                                                                Background="{Binding StatusColor}"
+                                                    <StackPanel>
+
+                                                        <!-- Заголовок: название организации + статус -->
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+
+                                                            <StackPanel Grid.Column="0">
+                                                                <TextBlock Text="{Binding DepartmentName}"
+                                                                           FontSize="14"
+                                                                           FontWeight="SemiBold"
+                                                                           Foreground="{DynamicResource PrimaryText}"
+                                                                           Margin="0,0,0,5"/>
+                                                                <TextBlock Text="{Binding DepartmentFullName}"
+                                                                           FontSize="12"
+                                                                           Foreground="{DynamicResource SecondaryText}"
+                                                                           TextWrapping="Wrap"/>
+                                                            </StackPanel>
+
+                                                            <Border Grid.Column="1"
+                                                                    Background="{Binding StatusColor}"
+                                                                    CornerRadius="5"
+                                                                    Padding="12,6"
+                                                                    Margin="10,0,0,0"
+                                                                    VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding StatusText}"
+                                                                           FontSize="12"
+                                                                           FontWeight="SemiBold"
+                                                                           Foreground="White"
+                                                                           TextWrapping="NoWrap"/>
+                                                            </Border>
+                                                        </Grid>
+
+                                                        <!-- Документы организации (если есть) -->
+                                                        <Border Margin="0,10,0,0"
+                                                                Background="{DynamicResource PrimaryBackground}"
+                                                                BorderBrush="{DynamicResource PrimaryBorder}"
+                                                                BorderThickness="1"
                                                                 CornerRadius="5"
-                                                                Padding="12,6"
-                                                                Margin="10,0,0,0"
-                                                                VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding StatusText}"
-                                                                       FontSize="12"
-                                                                       FontWeight="SemiBold"
-                                                                       Foreground="White"
-                                                                       TextWrapping="NoWrap"/>
+                                                                Padding="12,8"
+                                                                Visibility="{Binding HasAnyDocuments, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                            <StackPanel>
+
+                                                                <!-- Номер направленного документа -->
+                                                                <StackPanel Orientation="Horizontal"
+                                                                            Margin="0,0,0,6"
+                                                                            Visibility="{Binding HasOutgoingDocNumber, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                                    <TextBlock Text="📌 Номер направленного документа: "
+                                                                               FontSize="12"
+                                                                               FontWeight="SemiBold"
+                                                                               Foreground="{DynamicResource SecondaryText}"
+                                                                               VerticalAlignment="Center"/>
+                                                                    <TextBlock Text="{Binding OutgoingDocumentNumber}"
+                                                                               FontSize="12"
+                                                                               FontWeight="SemiBold"
+                                                                               Foreground="{DynamicResource ButtonPrimary}"
+                                                                               VerticalAlignment="Center"/>
+                                                                </StackPanel>
+
+                                                                <!-- Направленные файлы -->
+                                                                <StackPanel Margin="0,0,0,6"
+                                                                            Visibility="{Binding HasOutgoingFiles, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                                    <TextBlock Text="📤 Направленные документы"
+                                                                               FontSize="12"
+                                                                               FontWeight="SemiBold"
+                                                                               Foreground="{DynamicResource SecondaryText}"
+                                                                               Margin="0,0,0,4"/>
+                                                                    <ItemsControl ItemsSource="{Binding OutgoingFiles}">
+                                                                        <ItemsControl.ItemTemplate>
+                                                                            <DataTemplate>
+                                                                                <Button Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                                        CommandParameter="{Binding}"
+                                                                                        HorizontalAlignment="Left"
+                                                                                        Margin="0,0,0,4"
+                                                                                        Padding="8,4"
+                                                                                        FontSize="12"
+                                                                                        BorderThickness="0"
+                                                                                        Cursor="Hand">
+                                                                                    <StackPanel Orientation="Horizontal">
+                                                                                        <TextBlock Text="📄" Margin="0,0,6,0"/>
+                                                                                        <TextBlock Text="{Binding}" TextTrimming="CharacterEllipsis" MaxWidth="500"/>
+                                                                                    </StackPanel>
+                                                                                    <Button.Style>
+                                                                                        <Style TargetType="Button">
+                                                                                            <Setter Property="Background" Value="Transparent"/>
+                                                                                            <Setter Property="Foreground" Value="{DynamicResource ButtonPrimary}"/>
+                                                                                            <Setter Property="Template">
+                                                                                                <Setter.Value>
+                                                                                                    <ControlTemplate TargetType="Button">
+                                                                                                        <Border Background="{TemplateBinding Background}" CornerRadius="3" Padding="{TemplateBinding Padding}">
+                                                                                                            <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                                                                                        </Border>
+                                                                                                    </ControlTemplate>
+                                                                                                </Setter.Value>
+                                                                                            </Setter>
+                                                                                            <Style.Triggers>
+                                                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                                                    <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+                                                                                                </Trigger>
+                                                                                            </Style.Triggers>
+                                                                                        </Style>
+                                                                                    </Button.Style>
+                                                                                </Button>
+                                                                            </DataTemplate>
+                                                                        </ItemsControl.ItemTemplate>
+                                                                    </ItemsControl>
+                                                                </StackPanel>
+
+                                                                <!-- Ответные файлы -->
+                                                                <StackPanel Visibility="{Binding HasIncomingFiles, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                                    <TextBlock Text="📥 Ответные документы"
+                                                                               FontSize="12"
+                                                                               FontWeight="SemiBold"
+                                                                               Foreground="{DynamicResource SecondaryText}"
+                                                                               Margin="0,0,0,4"/>
+                                                                    <ItemsControl ItemsSource="{Binding IncomingFiles}">
+                                                                        <ItemsControl.ItemTemplate>
+                                                                            <DataTemplate>
+                                                                                <Button Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                                        CommandParameter="{Binding}"
+                                                                                        HorizontalAlignment="Left"
+                                                                                        Margin="0,0,0,4"
+                                                                                        Padding="8,4"
+                                                                                        FontSize="12"
+                                                                                        BorderThickness="0"
+                                                                                        Cursor="Hand">
+                                                                                    <StackPanel Orientation="Horizontal">
+                                                                                        <TextBlock Text="📨" Margin="0,0,6,0"/>
+                                                                                        <TextBlock Text="{Binding}" TextTrimming="CharacterEllipsis" MaxWidth="500"/>
+                                                                                    </StackPanel>
+                                                                                    <Button.Style>
+                                                                                        <Style TargetType="Button">
+                                                                                            <Setter Property="Background" Value="Transparent"/>
+                                                                                            <Setter Property="Foreground" Value="{DynamicResource ButtonPrimary}"/>
+                                                                                            <Setter Property="Template">
+                                                                                                <Setter.Value>
+                                                                                                    <ControlTemplate TargetType="Button">
+                                                                                                        <Border Background="{TemplateBinding Background}" CornerRadius="3" Padding="{TemplateBinding Padding}">
+                                                                                                            <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                                                                                        </Border>
+                                                                                                    </ControlTemplate>
+                                                                                                </Setter.Value>
+                                                                                            </Setter>
+                                                                                            <Style.Triggers>
+                                                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                                                    <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+                                                                                                </Trigger>
+                                                                                            </Style.Triggers>
+                                                                                        </Style>
+                                                                                    </Button.Style>
+                                                                                </Button>
+                                                                            </DataTemplate>
+                                                                        </ItemsControl.ItemTemplate>
+                                                                    </ItemsControl>
+                                                                </StackPanel>
+
+                                                            </StackPanel>
                                                         </Border>
-                                                    </Grid>
+
+                                                    </StackPanel>
                                                 </Border>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
