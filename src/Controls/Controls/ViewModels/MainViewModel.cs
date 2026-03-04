@@ -340,24 +340,20 @@ namespace Controls.ViewModels
             }
         }
 
+        /// <summary>
+        /// Загружает счётчик непрочитанных уведомлений из БД.
+        /// Использует SQL COUNT вместо загрузки всех записей для производительности.
+        /// </summary>
         public async Task LoadNotificationsAsync()
         {
             try
             {
                 using var freshContext = new ControlsDbContext();
                 
-                var notifications = await freshContext.Notifications
-                    .Include(n => n.ControlTask)
-                    .OrderByDescending(n => n.NotificationDate)
-                    .ToListAsync();
-
-                Notifications.Clear();
-                foreach (var notification in notifications)
-                {
-                    Notifications.Add(notification);
-                }
-
-                UnreadNotificationsCount = notifications.Count(n => !n.IsProcessed);
+                // Оптимизировано: SQL COUNT вместо ToListAsync + LINQ Count
+                // Не загружаем все уведомления, т.к. они не используются (только счётчик)
+                UnreadNotificationsCount = await freshContext.Notifications
+                    .CountAsync(n => !n.IsProcessed);
             }
             catch (Exception ex)
             {

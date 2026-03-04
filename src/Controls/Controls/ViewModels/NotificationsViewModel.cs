@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 using Controls.Data;
+using Controls.Helpers;
 using Controls.Models;
 using Controls.Services;
 using Microsoft.EntityFrameworkCore;
@@ -106,7 +107,7 @@ namespace Controls.ViewModels
             {
                 if (SetProperty(ref _searchText, value))
                 {
-                    IsDateDetected = DetectDate(value);
+                    IsDateDetected = DateDetector.ContainsDate(value);
                     FilterNotifications();
                 }
             }
@@ -453,15 +454,26 @@ namespace Controls.ViewModels
             }
         }
 
-        private void ViewTaskDetails(Notification? notification)
+        /// <summary>
+        /// Показывает окно с деталями задачи. Асинхронно загружает fresh copy из БД,
+        /// чтобы избежать конфликтов ChangeTracker при одновременных MarkAs* операциях.
+        /// </summary>
+        private async void ViewTaskDetails(Notification? notification)
         {
             if (notification?.ControlTask == null)
                 return;
 
-            var freshTask = _context.ControlTasks
-                .Include(t => t.Documents)
-                .FirstOrDefault(t => t.Id == notification.ControlTask.Id);
-            
+            // Загружаем свежую копию задачи с Documents в отдельном контексте
+            ControlTask? freshTask = null;
+            await Task.Run(() =>
+            {
+                using var freshContext = new ControlsDbContext();
+                freshTask = freshContext.ControlTasks
+                    .AsNoTracking()
+                    .Include(t => t.Documents)
+                    .FirstOrDefault(t => t.Id == notification.ControlTask.Id);
+            });
+
             if (freshTask == null)
                 return;
 
@@ -473,32 +485,6 @@ namespace Controls.ViewModels
             detailWindow.ShowDialog();
         }
 
-        /// <summary>
-        /// Определяет, содержит ли текст дату (форматы: dd.MM.yyyy, dd.MM.yy, dd.MM, dd/MM и т.д.)
-        /// </summary>
-        private bool DetectDate(string text)
-        {
-            if (string.IsNullOrWhiteSpace(text)) return false;
-            
-            var datePatterns = new[]
-            {
-                @"\d{1,2}\.\d{1,2}\.\d{2,4}",
-                @"\d{1,2}\.\d{1,2}",
-                @"\d{1,2}/\d{1,2}/\d{2,4}",
-                @"\d{1,2}/\d{1,2}",
-                @"\d{1,2}-\d{1,2}-\d{2,4}",
-                @"\d{1,2}-\d{1,2}"
-            };
-            
-            foreach (var pattern in datePatterns)
-            {
-                if (System.Text.RegularExpressions.Regex.IsMatch(text, pattern))
-                {
-                    return true;
-                }
-            }
-            
-            return false;
-        }
+        // УДАЛИЛИ DetectDate: теперь используем DateDetector.ContainsDate (compiled regex в Helpers).
     }
 }

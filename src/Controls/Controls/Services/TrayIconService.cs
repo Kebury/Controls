@@ -1,10 +1,10 @@
-﻿using System;
+﻿using System;  
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows;
 using Hardcodet.Wpf.TaskbarNotification;
 using Controls.Data;
-using System.Linq;
+using Controls.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Controls.Services
@@ -18,14 +18,15 @@ namespace Controls.Services
         private static extern bool DestroyIcon(IntPtr handle);
 
         private readonly TaskbarIcon _taskbarIcon;
-        private readonly ControlsDbContext _context;
         private Icon? _iconWithBadge;
         private Icon? _defaultIcon;
 
         public TrayIconService(TaskbarIcon taskbarIcon, ControlsDbContext context)
         {
             _taskbarIcon = taskbarIcon;
-            _context = context;
+            // context — зарезервирован для будущего использования;
+            // UpdateBadgeAsync намеренно создаёт short-lived контекст,
+            // чтобы всегда видеть свежие данные без кеша ChangeTracker.
             
             _defaultIcon = LoadDefaultIcon();
         }
@@ -37,10 +38,16 @@ namespace Controls.Services
         {
             try
             {
+                // Создаём short-lived контекст для получения свежих данных.
+                // IsProcessed — [NotMapped] свойство, раскрываем логику в SQL COUNT,
+                // чтобы не загружать всю таблицу уведомлений в память.
                 using var freshContext = new ControlsDbContext();
-                var allNotifications = await freshContext.Notifications.ToListAsync();
-                var unprocessedCount = allNotifications.Count(n => !n.IsProcessed);
+                var unprocessedCount = await freshContext.Notifications.CountAsync(n =>
+                    (n.NotificationType == NotificationType.DueTomorrow  && !n.IsNotified) ||
+                    (n.NotificationType == NotificationType.DueToday     && !n.IsReportSent && !n.IsCompletedInWorkingOrder) ||
+                    (n.NotificationType == NotificationType.Overdue      && !n.IsReportSent));
 
+                // Обновление иконки трея ОБЯЗАТЕЛЬНО должно происходить в UI потоке
                 await Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     if (unprocessedCount > 0)

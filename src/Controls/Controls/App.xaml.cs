@@ -652,7 +652,9 @@ public partial class App : Application
                 {
                     if (_appExiting) break;
 
-                    Dispatcher.Invoke(() =>
+                    // InvokeAsync (неблокирующий) вместо Invoke: если UI-поток занят
+                    // (например зависший диалог), Invoke мог бы привести к дедлоку.
+                    _ = Dispatcher.InvokeAsync(() =>
                     {
                         var win = MainWindow;
                         if (win != null)

@@ -45,15 +45,31 @@ namespace Controls.Services
             var today = DateTime.Today;
             var tomorrow = today.AddDays(1);
             
+            // Сначала очищаем устаревшие необработанные уведомления
             await CleanupOutdatedNotificationsAsync(today, tomorrow);
             
             var tasks = await _context.ControlTasks
                 .Where(t => t.Status != "Исполнено" && t.Status != "Отменено")
                 .ToListAsync();
 
+            if (tasks.Count == 0) return;
+
+            // Загружаем все существующие уведомления для активных заданий одним запросом
+            // вместо N отдельных запросов внутри цикла (устраняет N+1 проблему).
+            var taskIds = tasks.Select(t => t.Id).ToList();
+            var existingNotifications = await _context.Notifications
+                .AsTracking()
+                .Where(n => taskIds.Contains(n.ControlTaskId))
+                .ToListAsync();
+
+            // Словарь (taskId, тип уведомления) → список уведомлений для быстрого поиска
+            var notifLookup = existingNotifications
+                .GroupBy(n => (n.ControlTaskId, n.NotificationType))
+                .ToDictionary(g => g.Key, g => g.ToList());
+
             foreach (var task in tasks)
             {
-                await CreateNotificationIfNeededAsync(task, today, tomorrow);
+                CreateNotificationIfNeeded(task, today, tomorrow, notifLookup);
             }
 
             await _context.SaveChangesAsync();
@@ -115,9 +131,14 @@ namespace Controls.Services
         }
 
         /// <summary>
-        /// Создание уведомления для задания если необходимо
+        /// Создание уведомления для задания если необходимо.
+        /// Принимает предзагруженный словарь нотификаций (устраняет N+1).
         /// </summary>
-        private async Task CreateNotificationIfNeededAsync(ControlTask task, DateTime today, DateTime tomorrow)
+        private void CreateNotificationIfNeeded(
+            ControlTask task,
+            DateTime today,
+            DateTime tomorrow,
+            Dictionary<(int ControlTaskId, NotificationType Type), List<Notification>> notifLookup)
         {
             var dueDate = task.DueDate.Date;
 
@@ -139,15 +160,14 @@ namespace Controls.Services
             if (!notificationType.HasValue)
                 return;
 
-            var existingNotifications = await _context.Notifications
-                .AsTracking()
-                .Where(n => n.ControlTaskId == task.Id && n.NotificationType == notificationType.Value)
-                .ToListAsync();
-
-            var existingNotification = existingNotifications.FirstOrDefault(n => !n.IsProcessed);
+            // Ищем существующее необработанное уведомление в предзагруженном словаре
+            // (IsProcessed — [NotMapped], поэтому фильтруем в памяти, но данные уже загружены)
+            notifLookup.TryGetValue((task.Id, notificationType.Value), out var existing);
+            var existingNotification = existing?.FirstOrDefault(n => !n.IsProcessed);
             
             if (existingNotification != null)
             {
+                // Обновляем сообщение существующего уведомления на случай изменения названия задания
                 var updatedMessage = GenerateNotificationMessage(task, notificationType.Value);
                 if (existingNotification.Message != updatedMessage)
                 {
@@ -157,6 +177,7 @@ namespace Controls.Services
                 return;
             }
 
+            // Создаем новое уведомление
             var notification = new Notification
             {
                 ControlTaskId = task.Id,
@@ -279,9 +300,13 @@ namespace Controls.Services
         /// </summary>
         public async Task<int> GetUnprocessedCountAsync()
         {
+            // IsProcessed — [NotMapped] вычисляемое свойство, поэтому раскрываем
+            // логику прямо в SQL-запросе и не загружаем всю таблицу в память.
             using var freshContext = new ControlsDbContext();
-            var allNotifications = await freshContext.Notifications.ToListAsync();
-            return allNotifications.Count(n => !n.IsProcessed);
+            return await freshContext.Notifications.CountAsync(n =>
+                (n.NotificationType == NotificationType.DueTomorrow  && !n.IsNotified) ||
+                (n.NotificationType == NotificationType.DueToday     && !n.IsReportSent && !n.IsCompletedInWorkingOrder) ||
+                (n.NotificationType == NotificationType.Overdue      && !n.IsReportSent));
         }
 
         /// <summary>

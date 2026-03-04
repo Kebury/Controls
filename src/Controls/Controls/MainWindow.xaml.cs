@@ -82,7 +82,10 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Обработчик события обновления заданий - автоматически обновляет бейджи и счетчики
+    /// Обработчик события обновления заданий - автоматически обновляет бейджи и счетчики.
+    /// НАМЕРЕННО не вызывает GenerateNotificationsAsync: генерация уже происходит по таймеру
+    /// (каждый тик создаёт freshContext). Вызов GenerateNotificationsAsync здесь использовал
+    /// shared _context параллельно с таймером — гонка могла создавать дублирующие уведомления.
     /// </summary>
     private void OnTaskUpdated()
     {
@@ -90,10 +93,10 @@ public partial class MainWindow : Window
         {
             try
             {
-                await _notificationService.GenerateNotificationsAsync();
-                
+                // Только обновляем отображение (badge + счётчик вкладки) —
+                // это безопасно, т.к. TrayIconService и GetUnprocessedCountAsync
+                // создают собственные short-lived контексты.
                 await _trayIconService.UpdateBadgeAsync();
-                
                 NotificationsViewModel.RaiseNotificationsCountChanged();
             }
             catch (Exception)

@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.ComponentModel;
@@ -57,7 +59,7 @@ namespace Controls.ViewModels
             {
                 if (SetProperty(ref _searchText, value))
                 {
-                    IsDateDetected = DetectDate(value);
+                    IsDateDetected = DateDetector.ContainsDate(value);
                     FilterTasks();
                 }
             }
@@ -130,77 +132,98 @@ namespace Controls.ViewModels
             LoadCompletedTasks();
         }
 
+        // Обёртка для обратной совместимости с синхронными вызывающими местами
+        private void LoadCompletedTasks() => _ = LoadCompletedTasksAsync();
+
         /// <summary>
-        /// Загрузка всех завершённых заданий
+        /// Загрузка всех завершённых заданий асинхронно — DB-запросы выполняются в фоне,
+        /// UI не блокируется даже при сотнях записей на медленном сетевом SQLite-файле.
         /// </summary>
-        private void LoadCompletedTasks()
+        private async Task LoadCompletedTasksAsync()
         {
             try
             {
-                _dbContext.ChangeTracker.Clear();
-                
+                // Сохраняем текущее значение фильтра до перехода в фоновый поток
                 var savedAssignee = SelectedAssignee;
-                
+                var taskType = _currentTaskType;
+
+                // ── Фоновый поток: подключаемся через fresh context ────────────────────
+                var (completedControlTasks, executorMap, completedDeptTasks, uniqueAssignees) = 
+                    await Task.Run(() =>
+                {
+                    using var ctx = new ControlsDbContext();
+
+                    if (taskType == "control")
+                    {
+                        var tasks = ctx.ControlTasks
+                            .AsNoTracking()
+                            .Include(t => t.Documents)
+                            .Where(t => t.Status == "Исполнено")
+                            .ToList();
+
+                        var executors = ctx.Executors
+                            .AsNoTracking()
+                            .ToList()
+                            .ToDictionary(e => e.ShortName, e => e.FullInfo);
+
+                        var assignees = tasks
+                            .Where(t => !string.IsNullOrWhiteSpace(t.Assignee))
+                            .Select(t => t.Assignee)
+                            .Distinct()
+                            .OrderBy(a => a)
+                            .ToList();
+
+                        return (tasks, executors, new List<DepartmentTask>(), assignees);
+                    }
+                    else // department
+                    {
+                        var allDeptTasks = ctx.DepartmentTasks
+                            .AsNoTracking()
+                            .Include(t => t.Executor)
+                            .Include(t => t.TaskDepartments)
+                                .ThenInclude(td => td.Department)
+                            .ToList();
+
+                        var completedDept = allDeptTasks
+                            .Where(t => t.IsCompleted)
+                            .OrderByDescending(t => t.CompletedDate)
+                            .ToList();
+
+                        return (new List<ControlTask>(), new Dictionary<string, string>(), completedDept, new List<string>());
+                    }
+                });
+
+                // ── UI-поток: обновляем коллекции после await ─────────────────────────
                 Tasks.Clear();
                 DepartmentTasks.Clear();
                 Assignees.Clear();
                 Assignees.Add("Все исполнители");
-                
+
                 if (_currentTaskType == "control")
                 {
-                    var completedTasks = _dbContext.ControlTasks
-                        .Include(t => t.Documents)
-                        .Where(t => t.Status == "Исполнено")
-                        .ToList();
-
-                    var executors = _dbContext.Executors.ToList();
-                    foreach (var task in completedTasks)
+                    // Обогащаем информацией об исполнителях
+                    foreach (var task in completedControlTasks)
                     {
-                        if (!string.IsNullOrWhiteSpace(task.Assignee))
+                        if (!string.IsNullOrWhiteSpace(task.Assignee) &&
+                            executorMap.TryGetValue(task.Assignee, out var info))
                         {
-                            var executor = executors.FirstOrDefault(e => e.ShortName == task.Assignee);
-                            if (executor != null)
-                            {
-                                task.ExecutorInfo = executor.FullInfo;
-                            }
+                            task.ExecutorInfo = info;
                         }
                     }
 
-                    var uniqueAssignees = completedTasks
-                        .Where(t => !string.IsNullOrWhiteSpace(t.Assignee))
-                        .Select(t => t.Assignee)
-                        .Distinct()
-                        .OrderBy(a => a);
-
                     foreach (var assignee in uniqueAssignees)
-                    {
                         Assignees.Add(assignee);
-                    }
 
-                    foreach (var task in completedTasks)
-                    {
+                    foreach (var task in completedControlTasks)
                         Tasks.Add(task);
-                    }
                 }
-                else
+                else // department
                 {
-                    var allDepartmentTasks = _dbContext.DepartmentTasks
-                        .Include(t => t.Executor)
-                        .Include(t => t.TaskDepartments)
-                            .ThenInclude(td => td.Department)
-                        .ToList();
-
-                    var completedDepartmentTasks = allDepartmentTasks
-                        .Where(t => t.IsCompleted)
-                        .OrderByDescending(t => t.CompletedDate)
-                        .ToList();
-
-                    foreach (var task in completedDepartmentTasks)
-                    {
+                    foreach (var task in completedDeptTasks)
                         DepartmentTasks.Add(task);
-                    }
                 }
 
+                // Восстанавливаем значение фильтра
                 if (!string.IsNullOrEmpty(savedAssignee) && Assignees.Contains(savedAssignee))
                 {
                     _selectedAssignee = savedAssignee;
@@ -211,6 +234,9 @@ namespace Controls.ViewModels
                 }
                 OnPropertyChanged(nameof(SelectedAssignee));
 
+                // Создаем представление для фильтрации
+
+                // Создаем представление для фильтрации
                 _tasksView = CollectionViewSource.GetDefaultView(Tasks);
                 if (_tasksView != null)
                 {
@@ -386,32 +412,6 @@ namespace Controls.ViewModels
             }
         }
 
-        /// <summary>
-        /// Определяет, содержит ли текст дату (форматы: dd.MM.yyyy, dd.MM.yy, dd.MM, dd/MM и т.д.)
-        /// </summary>
-        private bool DetectDate(string text)
-        {
-            if (string.IsNullOrWhiteSpace(text)) return false;
-            
-            var datePatterns = new[]
-            {
-                @"\d{1,2}\.\d{1,2}\.\d{2,4}",
-                @"\d{1,2}\.\d{1,2}",
-                @"\d{1,2}/\d{1,2}/\d{2,4}",
-                @"\d{1,2}/\d{1,2}",
-                @"\d{1,2}-\d{1,2}-\d{2,4}",
-                @"\d{1,2}-\d{1,2}"
-            };
-            
-            foreach (var pattern in datePatterns)
-            {
-                if (System.Text.RegularExpressions.Regex.IsMatch(text, pattern))
-                {
-                    return true;
-                }
-            }
-            
-            return false;
-        }
+        // УДАЛИЛИ DetectDate: теперь используем DateDetector.ContainsDate (compiled regex в Helpers).
     }
 }

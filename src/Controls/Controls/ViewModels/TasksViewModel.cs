@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.ComponentModel;
 using System.Windows.Data;
 using Controls.Data;
+using Controls.Helpers;
 using Controls.Models;
 using Controls.Services;
 using Microsoft.EntityFrameworkCore;
@@ -37,7 +39,7 @@ namespace Controls.ViewModels
             
             NotificationService.TaskUpdated += OnTaskUpdated;
             
-            LoadTasks();
+            _ = LoadTasksAsync();
         }
 
         /// <summary>
@@ -83,7 +85,7 @@ namespace Controls.ViewModels
             {
                 if (SetProperty(ref _searchText, value))
                 {
-                    IsDateDetected = DetectDate(value);
+                    IsDateDetected = DateDetector.ContainsDate(value);
                     FilterTasks();
                 }
             }
@@ -138,7 +140,7 @@ namespace Controls.ViewModels
             {
                 if (SetProperty(ref _currentView, value))
                 {
-                    LoadTasks();
+                    _ = LoadTasksAsync();
                     OnPropertyChanged(nameof(ShowOnlyToday));
                     OnPropertyChanged(nameof(ShowAllTasks));
                     OnPropertyChanged(nameof(ShowOverdue));
@@ -164,53 +166,77 @@ namespace Controls.ViewModels
         public ICommand ShowTodayTasksCommand { get; }
         public ICommand ShowOverdueTasksCommand { get; }
 
-        private void LoadTasks()
+        /// <summary>
+        /// Асинхронная обёртка для LoadTasksAsync (для синхронных вызовов).
+        /// </summary>
+        private void LoadTasks() => _ = LoadTasksAsync();
+
+        /// <summary>
+        /// Загружает задачи из БД в отдельном контексте (Task.Run), чтобы не блокировать UI.
+        /// Медленная сетевая БД или большой объём данных не заморозят интерфейс.
+        /// </summary>
+        private async Task LoadTasksAsync()
         {
             try
             {
-                _dbContext.ChangeTracker.Clear();
-                
                 var savedAssignee = SelectedAssignee;
                 var savedTaskType = SelectedTaskType;
-                
-                Tasks.Clear();
+                var currentView = CurrentView;
 
-                var allTasks = _dbContext.ControlTasks
-                    .Include(t => t.Documents)
-                    .Where(t => t.Status != "Исполнено")
-                    .ToList();
-
-                var executors = _dbContext.Executors.ToList();
-                foreach (var task in allTasks)
+                // Загружаем данные в фоне с отдельным контекстом (не блокируя UI)
+                var data = await Task.Run(() =>
                 {
-                    if (!string.IsNullOrWhiteSpace(task.Assignee))
+                    using var freshContext = new ControlsDbContext();
+
+                    var allTasks = freshContext.ControlTasks
+                        .AsNoTracking()
+                        .Include(t => t.Documents)
+                        .Where(t => t.Status != "Исполнено")
+                        .ToList();
+
+                    var executors = freshContext.Executors.AsNoTracking().ToList();
+                    foreach (var task in allTasks)
                     {
-                        var executor = executors.FirstOrDefault(e => e.FullName == task.Assignee);
-                        if (executor != null)
+                        if (!string.IsNullOrWhiteSpace(task.Assignee))
                         {
-                            task.ExecutorInfo = executor.FullInfo;
+                            var executor = executors.FirstOrDefault(e => e.FullName == task.Assignee);
+                            if (executor != null)
+                            {
+                                task.ExecutorInfo = executor.FullInfo;
+                            }
                         }
                     }
-                }
 
-                var today = DateTime.Today;
-                
-                TodayTasksCount = allTasks.Count(t => t.DueDate.Date == today);
-                AllTasksCount = allTasks.Count;
-                OverdueTasksCount = allTasks.Count(t => t.DueDate < DateTime.Now && t.Status != "Исполнено");
+                    var today = DateTime.Today;
+
+                    var todayTasksCount = allTasks.Count(t => t.DueDate.Date == today);
+                    var allTasksCount = allTasks.Count;
+                    var overdueTasksCount = allTasks.Count(t => t.DueDate < DateTime.Now && t.Status != "Исполнено");
+
+                    var uniqueAssignees = allTasks
+                        .Where(t => !string.IsNullOrWhiteSpace(t.Assignee))
+                        .Select(t => t.Assignee)
+                        .Distinct()
+                        .OrderBy(a => a)
+                        .ToList();
+
+                    return (allTasks, todayTasksCount, allTasksCount, overdueTasksCount, uniqueAssignees);
+                });
+
+                // Обновляем UI на главном потоке
+                Tasks.Clear();
+
+                TodayTasksCount = data.todayTasksCount;
+                AllTasksCount = data.allTasksCount;
+                OverdueTasksCount = data.overdueTasksCount;
 
                 OnPropertyChanged(nameof(TodayTasksCount));
                 OnPropertyChanged(nameof(AllTasksCount));
                 OnPropertyChanged(nameof(OverdueTasksCount));
 
-                var uniqueAssignees = allTasks
-                    .Where(t => !string.IsNullOrWhiteSpace(t.Assignee))
-                    .Select(t => t.Assignee)
-                    .Distinct()
-                    .OrderBy(a => a)
-                    .ToList();
+                var uniqueAssignees = data.uniqueAssignees;
 
-                if (!Assignees.Contains("Все исполнители"))
+                if (! Assignees.Contains("Все исполнители"))
                 {
                     Assignees.Insert(0, "Все исполнители");
                 }
@@ -265,11 +291,12 @@ namespace Controls.ViewModels
                     }
                 }
 
-                IEnumerable<ControlTask> filteredTasks = CurrentView switch
+                var today = DateTime.Today;
+                IEnumerable<ControlTask> filteredTasks = currentView switch
                 {
-                    "today" => allTasks.Where(t => t.DueDate.Date == today),
-                    "overdue" => allTasks.Where(t => t.DueDate < DateTime.Now),
-                    _ => allTasks
+                    "today" => data.allTasks.Where(t => t.DueDate.Date == today),
+                    "overdue" => data.allTasks.Where(t => t.DueDate < DateTime.Now),
+                    _ => data.allTasks
                 };
 
                 foreach (var task in filteredTasks.OrderBy(t => t.DueDate))
@@ -399,7 +426,7 @@ namespace Controls.ViewModels
 
                 if (editWindow.ShowDialog() == true)
                 {
-                    LoadTasks();
+                    _ = LoadTasksAsync();
                 }
             }
         }
@@ -441,7 +468,7 @@ namespace Controls.ViewModels
 
                 if (editWindow.ShowDialog() == true)
                 {
-                    LoadTasks();
+                    _ = LoadTasksAsync();
                 }
             }
         }
@@ -472,14 +499,25 @@ namespace Controls.ViewModels
             }
         }
 
-        private void ViewTaskDetails(ControlTask? task)
+        /// <summary>
+        /// Показывает окно с деталями задачи. Асинхронно загружает fresh copy из БД,
+        /// чтобы избежать конфликтов ChangeTracker при одновременных MarkAs* операциях.
+        /// </summary>
+        private async void ViewTaskDetails(ControlTask? task)
         {
             if (task == null) return;
 
-            var freshTask = _dbContext.ControlTasks
-                .Include(t => t.Documents)
-                .FirstOrDefault(t => t.Id == task.Id);
-            
+            // Загружаем свежую копию задачи с Documents в отдельном контексте
+            ControlTask? freshTask = null;
+            await Task.Run(() =>
+            {
+                using var freshContext = new ControlsDbContext();
+                freshTask = freshContext.ControlTasks
+                    .AsNoTracking()
+                    .Include(t => t.Documents)
+                    .FirstOrDefault(t => t.Id == task.Id);
+            });
+
             if (freshTask == null) return;
 
             var detailWindow = new Views.TaskDetailWindow();
@@ -488,47 +526,23 @@ namespace Controls.ViewModels
             detailWindow.DataContext = viewModel;
             detailWindow.Owner = Application.Current.MainWindow;
             detailWindow.ShowDialog();
-            
-            LoadTasks();
+
+            _ = LoadTasksAsync();
         }
         
         /// <summary>
-        /// Обработчик события обновления задания из NotificationService
+        /// Обработчик события обновления задания из NotificationService.
+        /// InvokeAsync вместо Invoke: если UI-поток занят (например, модальным окном),
+        /// Invoke блокировал бы поток-источник события.
         /// </summary>
         private void OnTaskUpdated()
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            _ = System.Windows.Application.Current?.Dispatcher.InvokeAsync(async () =>
             {
-                LoadTasks();
+                await LoadTasksAsync();
             });
         }
 
-        /// <summary>
-        /// Определяет, содержит ли текст дату (форматы: dd.MM.yyyy, dd.MM.yy, dd.MM, dd/MM и т.д.)
-        /// </summary>
-        private bool DetectDate(string text)
-        {
-            if (string.IsNullOrWhiteSpace(text)) return false;
-            
-            var datePatterns = new[]
-            {
-                @"\d{1,2}\.\d{1,2}\.\d{2,4}",
-                @"\d{1,2}\.\d{1,2}",
-                @"\d{1,2}/\d{1,2}/\d{2,4}",
-                @"\d{1,2}/\d{1,2}",
-                @"\d{1,2}-\d{1,2}-\d{2,4}",
-                @"\d{1,2}-\d{1,2}"
-            };
-            
-            foreach (var pattern in datePatterns)
-            {
-                if (System.Text.RegularExpressions.Regex.IsMatch(text, pattern))
-                {
-                    return true;
-                }
-            }
-            
-            return false;
-        }
+        // УДАЛИЛИ DetectDate: теперь используем DateDetector.ContainsDate (compiled regex в Helpers).
     }
 }
