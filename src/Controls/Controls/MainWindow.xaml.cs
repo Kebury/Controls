@@ -129,12 +129,6 @@ public partial class MainWindow : Window
         }
     }
 
-    private async System.Threading.Tasks.Task UpdateTrayIconBadgeAsync()
-    {
-        if (_trayIconService != null)
-            await _trayIconService.UpdateBadgeAsync();
-    }
-
     private void Window_StateChanged(object? sender, EventArgs e)
     {
         if (WindowState == WindowState.Minimized)

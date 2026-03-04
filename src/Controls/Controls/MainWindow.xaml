@@ -48,7 +48,6 @@
         </DataTemplate>
 
         <tb:TaskbarIcon x:Key="TrayIcon"
-                        x:Name="TrayIcon"
                         IconSource="Resources/app.ico"
                         ToolTipText="Задачи"
                         TrayMouseDoubleClick="TrayIcon_TrayMouseDoubleClick">

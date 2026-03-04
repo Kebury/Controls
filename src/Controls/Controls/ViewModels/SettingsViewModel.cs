@@ -621,6 +621,16 @@ namespace Controls.ViewModels
                         
                         if (result == MessageBoxResult.Yes)
                         {
+                            // Скрываем иконку трея ДО запуска нового процесса,
+                            // иначе оба процесса покажут иконку одновременно.
+                            if (System.Windows.Application.Current.MainWindow is MainWindow mainWin)
+                            {
+                                var ti = mainWin.Resources["TrayIcon"] as Hardcodet.Wpf.TaskbarNotification.TaskbarIcon;
+                                ti?.Dispose();
+                            }
+                            // Освобождаем мьютекс ДО запуска нового процесса,
+                            // иначе новый экземпляр не сможет его захватить и сразу завершится
+                            App.ReleaseSingleInstanceForRestart();
                             System.Diagnostics.Process.Start(
                                 System.Diagnostics.Process.GetCurrentProcess().MainModule!.FileName);
                             System.Windows.Application.Current.Shutdown();
@@ -676,6 +686,16 @@ namespace Controls.ViewModels
                         MessageBoxButton.OK,
                         MessageBoxImage.Information);
                     
+                    // Скрываем иконку трея ДО запуска нового процесса,
+                    // иначе оба процесса покажут иконку одновременно.
+                    if (System.Windows.Application.Current.MainWindow is MainWindow mainWin2)
+                    {
+                        var ti2 = mainWin2.Resources["TrayIcon"] as Hardcodet.Wpf.TaskbarNotification.TaskbarIcon;
+                        ti2?.Dispose();
+                    }
+                    // Освобождаем мьютекс ДО запуска нового процесса,
+                    // иначе новый экземпляр не сможет его захватить и сразу завершится
+                    App.ReleaseSingleInstanceForRestart();
                     System.Diagnostics.Process.Start(
                         System.Diagnostics.Process.GetCurrentProcess().MainModule!.FileName);
                     System.Windows.Application.Current.Shutdown();

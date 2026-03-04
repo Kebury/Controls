@@ -31,7 +31,8 @@ public partial class App : Application
     private const string MutexName       = "Controls.TaskManager.SingleInstance";
     private const string ShowWindowEvent = "Controls.TaskManager.ShowWindow";
     private static Mutex? _singleInstanceMutex;
-    private volatile bool _appExiting = false;
+    private volatile bool _appExiting   = false;
+    private volatile bool _isRestarting = false;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -584,13 +585,16 @@ public partial class App : Application
 
         // Останавливаем фоновый поток-слушатель одиночного экземпляра
         _appExiting = true;
-        try
+        if (!_isRestarting)
         {
-            using var ev = EventWaitHandle.OpenExisting(ShowWindowEvent);
-            ev.Set(); // разблокирует WaitOne в потоке-слушателе
-        }
-        catch
-        {
+            try
+            {
+                using var ev = EventWaitHandle.OpenExisting(ShowWindowEvent);
+                ev.Set(); // разблокирует WaitOne в потоке-слушателе
+            }
+            catch
+            {
+            }
         }
 
         try
@@ -628,6 +632,11 @@ public partial class App : Application
     /// </summary>
     public static void ReleaseSingleInstanceForRestart()
     {
+        // Флаг предотвращает повторную сигнализацию ShowWindowEvent в OnExit,
+        // иначе новый процесс получает сигнал ещё до завершения инициализации.
+        if (Current is App app)
+            app._isRestarting = true;
+
         if (_singleInstanceMutex != null)
         {
             try { _singleInstanceMutex.ReleaseMutex(); } catch { }
